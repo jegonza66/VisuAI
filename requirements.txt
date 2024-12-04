@@ -1,5 +1,10 @@
-pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu124
-dominate>=2.4.0
-visdom>=0.1.8.8
+dominate
+visdom
 wandb
-opencv
+opencv-python
+ipython
+pillow
+numpy
+mediapipe
+tensorflow
+tensorflow_hub

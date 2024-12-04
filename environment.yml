@@ -1,4 +1,4 @@
-name: pytorch-CycleGAN-and-pix2pix
+name: live_webcam_filter
 channels:
 - pytorch
 - defaults
