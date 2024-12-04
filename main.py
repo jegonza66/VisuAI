@@ -13,15 +13,14 @@ import tensorflow as tf
 from tensorflow.keras.applications import InceptionV3
 import tensorflow_hub as hub
 
-start_time = datetime.today().strftime('%Y-%m-%d_%H-%M')
 
 # Define model parameters
 sys.argv = [
     'test.py',  # Script name
-    '--name', 'cartoon',  # horse2zebra_pretrained / style_vangogh_pretrained / cartoon / dream / style / psych
-    '--load_size', '256',
-    '--output_height', '720',
-    '--output_width', '1280',
+    '--name', 'psych',  # horse2zebra_pretrained / style_vangogh_pretrained / cartoon / dream / style / psych
+    '--load_size', '1080',
+    '--output_height', '1080',
+    '--output_width', '1920',
     '--gpu_ids', '',
     '--no_dropout',
     '--face_text', '',
@@ -71,6 +70,7 @@ fourcc = cv2.VideoWriter_fourcc(*'mp4v')
 if opt.save_output_path:
     print('saving output to output folder')
     os.makedirs(opt.save_output_path, exist_ok=True)
+    start_time = datetime.today().strftime('%Y-%m-%d_%H-%M')
     out = cv2.VideoWriter(f'{opt.save_output_path}/{start_time}.mp4', fourcc, fps, (opt.load_size, opt.load_size))
 
 # Run
@@ -83,7 +83,7 @@ while True:
     frame = cv2.resize(frame, (opt.load_size, opt.load_size))
 
     if opt.name == 'psych':
-        output_frame = functions.psychedelic_effect(frame, frame_count)
+        output_frame = functions.psychedelic_effect(frame, frame_count, amplitude=20, wavelength=75, frame_count_div=5)
         frame_count += 1
 
     elif opt.name == 'cartoon':

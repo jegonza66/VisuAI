@@ -52,25 +52,40 @@ def apply_deepdream(frame, dream_model):
     return np.array(dreamed_image)
 
 
-# Cartoon functions
+# Psych functions
 def color_invert(image):
     return cv2.bitwise_not(image)
 
-def ripple_effect(image, amplitude=5, frequency=10):
+
+def animated_ripple_effect(image, frame_count, amplitude=10, wavelength=30):
     h, w = image.shape[:2]
     x_indices = np.tile(np.arange(w), (h, 1))
     y_indices = np.tile(np.arange(h), (w, 1)).T
 
-    x_indices = (x_indices + amplitude * np.sin(2 * np.pi * y_indices / frequency)).astype(np.float32)
-    y_indices = (y_indices + amplitude * np.sin(2 * np.pi * x_indices / frequency)).astype(np.float32)
+    amplitude = amplitude * np.sin(2 * np.pi * frame_count / 60)  # Amplitude oscillates
+    freq = wavelength + 5 * np.sin(2 * np.pi * frame_count / 120)      # Frequency oscillates
+
+    x_indices = (x_indices + amplitude * np.sin(2 * np.pi * y_indices / freq)).astype(np.float32)
+    y_indices = (y_indices + amplitude * np.sin(2 * np.pi * x_indices / freq)).astype(np.float32)
 
     return cv2.remap(image, x_indices, y_indices, interpolation=cv2.INTER_LINEAR, borderMode=cv2.BORDER_REFLECT)
 
 
-def gradient_map(image):
+def pulsating_brightness(image, frame_count, intensity=50):
+    factor = 1 + 0.5 * np.sin(2 * np.pi * frame_count / 60)  # Oscillates between 0.5 and 1.5
+    hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+    hsv[:, :, 2] = np.clip(hsv[:, :, 2] * factor, 0, 255)
+    return cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
+
+
+def animated_gradient_map(image, frame_count):
     lut = np.zeros((256, 1, 3), dtype=np.uint8)
     for i in range(256):
-        lut[i, 0] = (255 - i, i % 128, i)  # Custom gradient
+        lut[i, 0] = (
+            (255 - i + frame_count * 5) % 256,  # Dynamic red channel
+            (i * 2 + frame_count * 3) % 256,   # Dynamic green channel
+            (i + frame_count * 7) % 256        # Dynamic blue channel
+        )
     return cv2.LUT(image, lut)
 
 
@@ -80,20 +95,21 @@ def hue_shift(image, shift_value):
     return cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
 
 
-def psychedelic_effect(image, frame_count):
+def psychedelic_effect(image, frame_count, amplitude=3, wavelength=15, frame_count_div=4):
     # Apply hue shift
-    hue_shifted = hue_shift(image, frame_count % 180)
+    hue_shifted = hue_shift(image, (frame_count) % 180)
 
     # Add ripple effect
-    rippled = ripple_effect(hue_shifted, amplitude=3, frequency=15)
+    rippled = animated_ripple_effect(hue_shifted, frame_count=frame_count, amplitude=amplitude, wavelength=wavelength)
 
     # Apply gradient map
-    psychedelic = gradient_map(rippled)
+    psychedelic = animated_gradient_map(rippled, frame_count/frame_count_div)
+
 
     return psychedelic
 
 
-# Function to add dynamic math effects
+# Cartoon functions
 def add_math_effect(image, face_coords, text="E=mc^2"):
     h, w, _ = image.shape
     for face in face_coords:
