@@ -16,42 +16,6 @@ def apply_style_transfer(content_image, style_image, style_transfer_model, image
     return np.array(stylized_image[0] * 255, dtype=np.uint8)
 
 
-# Gradient ascent function for DeepDream
-def deepdream(image, dream_model, iterations=1, step_size=0.01):
-    image = tf.convert_to_tensor(image)
-    for _ in range(iterations):
-        with tf.GradientTape() as tape:
-            tape.watch(image)
-            loss = tf.reduce_mean(dream_model(image))
-        grads = tape.gradient(loss, image)
-        grads /= tf.math.reduce_std(grads) + 1e-8
-        image = image + grads * step_size
-    return image
-
-
-# Prepare image for model
-def preprocess_image(image):
-    image = tf.image.resize(image, (224, 224))  # Resize for InceptionV3
-    image = preprocess_input(image)
-    return image
-
-
-# Apply DeepDream effect
-def apply_deepdream(frame, dream_model):
-    # Preprocess frame
-    input_image = preprocess_image(frame)
-    input_image = tf.expand_dims(input_image, axis=0)
-
-    # Apply deepdream
-    dreamed_image = deepdream(input_image, dream_model)
-
-    # Post-process and return
-    dreamed_image = dreamed_image[0]
-    dreamed_image = tf.image.resize(dreamed_image, frame.shape[:2])
-    dreamed_image = tf.cast(dreamed_image, tf.uint8)
-    return np.array(dreamed_image)
-
-
 # Psych functions
 def color_invert(image):
     return cv2.bitwise_not(image)

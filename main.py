@@ -9,15 +9,13 @@ import os
 from datetime import datetime
 import functions
 import mediapipe as mp
-import tensorflow as tf
-from tensorflow.keras.applications import InceptionV3
 import tensorflow_hub as hub
 
 
 # Define model parameters
 sys.argv = [
     'test.py',  # Script name
-    '--name', 'psych',  # horse2zebra_pretrained / style_vangogh_pretrained / cartoon / dream / style / psych
+    '--name', 'psych',  # horse2zebra_pretrained / style_vangogh_pretrained / cartoon / style / psych
     '--load_size', '1080',
     '--output_height', '1080',
     '--output_width', '1920',
@@ -33,11 +31,6 @@ if opt.name == 'cartoon':
     # Initialize Mediapipe Face Detection
     mp_face_detection = mp.solutions.face_detection
     face_detection = mp_face_detection.FaceDetection(min_detection_confidence=0.5)
-elif opt.name == 'dream':
-    # Load pre-trained InceptionV3 model
-    model = InceptionV3(include_top=False, weights='imagenet')
-    dream_layer = model.get_layer(f'mixed{opt.dream_model_layer}')  # Layer to "dream" from
-    dream_model = tf.keras.Model(inputs=model.input, outputs=dream_layer.output)
 elif opt.name == 'style':
     # Load the pre-trained style transfer model
     style_transfer_model = hub.load('https://tfhub.dev/google/magenta/arbitrary-image-stylization-v1-256/2')
@@ -101,16 +94,6 @@ while True:
         # Add math effects
         if opt.face_text:
             output_frame = functions.add_math_effect(output_frame, face_coords, text=opt.face_text)
-
-    elif opt.name == 'dream':
-        # Convert frame to RGB
-        rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-
-        # Apply DeepDream effect (downscale for efficiency)
-        dreamed_frame = functions.apply_deepdream(rgb_frame, dream_model)
-
-        # Convert back to BGR for OpenCV display
-        output_frame = cv2.cvtColor(dreamed_frame, cv2.COLOR_RGB2BGR)
 
     elif opt.name == 'style':
         # Convert frame to RGB
