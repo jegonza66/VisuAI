@@ -18,13 +18,13 @@ from tensorflow.keras.applications import InceptionV3
 # Define model parameters
 sys.argv = [
     'test.py',  # Script name
-    '--name', 'style_vangogh_pretrained',  # horse2zebra_pretrained / style_vangogh_pretrained / cartoon / style / psych / dream
+    '--name', 'style',  # horse2zebra_pretrained / style_vangogh_pretrained / cartoon / style / psych / dream
     '--load_size', '512',
     '--output_height', '512',
     '--output_width', '512',
     '--gpu_ids', '',  # 0 for
     '--no_dropout',
-    '--dream_model_layer', '',
+    '--dream_model_layer', '1',
     '--face_text', '',  # only for cartoon model
     '--face_effects', '',  # only for cartoon model
     '--save_output_path', ''

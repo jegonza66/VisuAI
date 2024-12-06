@@ -14,7 +14,7 @@
                  input_nc: 3                             
                   isTrain: False                         	[default: None]
                 load_iter: 0                             	[default: 0]
-                load_size: 256                           	[default: 512]
+                load_size: 512                           
                     model: test                          
              model_suffix:                               
                n_layers_D: 3                             
