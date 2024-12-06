@@ -3,6 +3,58 @@ import cv2
 import tensorflow as tf
 from tensorflow.keras.applications.inception_v3 import preprocess_input
 
+
+def brighten_dark_regions(image, threshold=50, factor=1.5):
+    """
+    Brighten dark areas selectively.
+    """
+    mask = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY) < threshold
+    brightened = image.copy()
+    brightened[mask] = np.clip(brightened[mask] * factor, 0, 255).astype(np.uint8)
+    return brightened
+
+
+def adjust_brightness_contrast(image, contrast=1, brightness=50):
+    """
+    Adjusts brightness and contrast.
+    Alpha > 1 increases contrast, beta > 0 increases brightness.
+    """
+    return cv2.convertScaleAbs(image, alpha=contrast, beta=brightness)
+
+
+# Gradient ascent function for DeepDream
+def deepdream(image, dream_model, iterations=2, step_size=.2):
+    image = tf.convert_to_tensor(image)
+    for _ in range(iterations):
+        with tf.GradientTape() as tape:
+            tape.watch(image)
+            loss = tf.reduce_mean(dream_model(image))
+        grads = tape.gradient(loss, image)
+        grads /= tf.math.reduce_std(grads) + 1e-8
+        image = image + grads * step_size
+    return image
+# Prepare image for model
+def preprocess_image(image, size):
+    # Preprocess: Adjust brightness/contrast
+    # image = adjust_brightness_contrast(image, contrast=0.5, brightness=50)
+    image = tf.image.resize(image, (size, size))  # Resize for InceptionV3
+    image = preprocess_input(image)
+    return image
+
+# Apply DeepDream effect
+def apply_deepdream(frame, dream_model, img_size):
+    # Preprocess frame
+    input_image = preprocess_image(frame, img_size)
+    input_image = tf.expand_dims(input_image, axis=0)
+    # Apply deepdream
+    dreamed_image = deepdream(input_image, dream_model)
+    # Post-process and return
+    dreamed_image = dreamed_image[0]
+    dreamed_image = tf.image.resize(dreamed_image, frame.shape[:2])
+    dreamed_image = tf.cast(dreamed_image, tf.uint8)
+    return np.array(dreamed_image)
+
+
 # Style transfer functions
 def apply_style_transfer(content_image, style_image, style_transfer_model, image_size):
     # Preprocess images
