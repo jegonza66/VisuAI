@@ -3,18 +3,18 @@
           checkpoints_dir: ./checkpoints                 
                 crop_size: 512                           
              dataset_mode: single                        
-        dream_model_layer: 3                             
+        dream_model_layer: 1                             	[default: 3]
                     epoch: latest                        
                      eval: False                         
              face_effects:                               
                 face_text:                               
-                  gpu_ids:                               
+                  gpu_ids: 0                             	[default: ]
                 init_gain: 0.02                          
                 init_type: normal                        
                  input_nc: 3                             
                   isTrain: False                         	[default: None]
                 load_iter: 0                             	[default: 0]
-                load_size: 256                           	[default: 512]
+                load_size: 512                           
                     model: test                          
              model_suffix:                               
                n_layers_D: 3                             
@@ -26,9 +26,9 @@
                no_dropout: True                          	[default: False]
                      norm: instance                      
                  num_test: 50                            
-            output_height: 720                           	[default: 1080]
+            output_height: 850                           	[default: 1080]
                 output_nc: 3                             
-             output_width: 1280                          	[default: 1920]
+             output_width: 1550                          	[default: 1920]
                     phase: test                          
                preprocess: resize_and_crop               
               results_dir: ./results/                    

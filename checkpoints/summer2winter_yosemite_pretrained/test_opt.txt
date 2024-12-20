@@ -1,22 +1,20 @@
 ----------------- Options ---------------
              aspect_ratio: 1.0                           
-               batch_size: 1                             
           checkpoints_dir: ./checkpoints                 
-                crop_size: 512                           	[default: 256]
-                 dataroot: datasets/vangogh2photo/testA  
+                crop_size: 512                           
              dataset_mode: single                        
-                direction: AtoB                          
-          display_winsize: 256                           
+        dream_model_layer: 1                             	[default: 3]
                     epoch: latest                        
                      eval: False                         
-                  gpu_ids:                               
+             face_effects:                               
+                face_text:                               
+                  gpu_ids: 0                             	[default: ]
                 init_gain: 0.02                          
                 init_type: normal                        
                  input_nc: 3                             
                   isTrain: False                         	[default: None]
                 load_iter: 0                             	[default: 0]
-                load_size: 512                           	[default: 256]
-         max_dataset_size: inf                           
+                load_size: 512                           
                     model: test                          
              model_suffix:                               
                n_layers_D: 3                             
@@ -26,15 +24,15 @@
                      netG: resnet_9blocks                
                       ngf: 64                            
                no_dropout: True                          	[default: False]
-                  no_flip: False                         
                      norm: instance                      
                  num_test: 50                            
-              num_threads: 4                             
+            output_height: 850                           	[default: 1080]
                 output_nc: 3                             
+             output_width: 1550                          	[default: 1920]
                     phase: test                          
                preprocess: resize_and_crop               
               results_dir: ./results/                    
-           serial_batches: False                         
+         save_output_path:                               
                    suffix:                               
                 use_wandb: False                         
                   verbose: False                         
