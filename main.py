@@ -13,7 +13,7 @@ for gpu in gpus:
 
 # style_transfer / cyclegan_horse2zebra_pretrained / cyclegan_style_vangogh_pretrained / yolo / psych / dream / cartoon
 model_name = 'yolo_cartoon'
-img_load_size = 512  # only for style and dream models
+img_load_size = 256  # only for style and dream models
 output_width = 1360
 output_height = 768
 save_output_path = ''

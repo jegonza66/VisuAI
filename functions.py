@@ -192,9 +192,6 @@ def transform_frame_cartoon(frame, face_effects, face_detection, face_text, img_
     # Resize frame
     frame = cv2.resize(frame, (img_load_size, img_load_size))
 
-    # Apply filter
-    frame = cartoonify(frame)
-
     # Detect faces
     if face_effects:
         results = face_detection.process(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
@@ -207,6 +204,9 @@ def transform_frame_cartoon(frame, face_effects, face_detection, face_text, img_
         # Add math effects
         if face_text:
             frame = add_math_effect(frame, face_coords, text=face_text)
+
+    # Apply filter
+    frame = cartoonify(frame)
 
     return frame
 
