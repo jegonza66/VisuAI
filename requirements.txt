@@ -8,3 +8,4 @@ numpy
 mediapipe
 tensorflow==2.10.1
 tensorflow_hub
+ultralytics

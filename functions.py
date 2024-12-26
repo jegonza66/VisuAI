@@ -1,3 +1,4 @@
+import os.path
 import numpy as np
 import cv2
 import tensorflow as tf
@@ -11,10 +12,10 @@ from options.test_options import TestOptions
 import tensorflow_hub as hub
 from torchvision import transforms
 from models import create_model
-# import mediapipe as mp
+import mediapipe as mp
 
 
-def define_models_params(model_name, img_load_size, output_width, output_height, save_output_path, dream_model_layer):
+def define_models_params(model_name, img_load_size, output_width, output_height, save_output_path, dream_model_layer, gpu_ids):
     models = {}
     params = {}
     # YOLO model
@@ -28,8 +29,7 @@ def define_models_params(model_name, img_load_size, output_width, output_height,
         # Load the pre-trained style transfer model
         style_transfer_model = hub.load('https://tfhub.dev/google/magenta/arbitrary-image-stylization-v1-256/2')
         style_image_path = 'input/style.jpg'
-        prev_style_image = cv2.imread(style_image_path)  # Replace with your style image path
-        prev_style_image = cv2.cvtColor(prev_style_image, cv2.COLOR_BGR2RGB)
+        prev_style_image = cv2.imread(style_image_path)
 
         models['style_transfer_model'] = style_transfer_model
         params['style_image_path'] = style_image_path
@@ -41,7 +41,7 @@ def define_models_params(model_name, img_load_size, output_width, output_height,
         sys.argv = [
             'test.py',  # Script name
             '--no_dropout',
-            '--gpu_ids', '0',
+            '--gpu_ids', f'{gpu_ids}',
         ]
 
         # Define gpu or cpu device
@@ -78,17 +78,17 @@ def define_models_params(model_name, img_load_size, output_width, output_height,
         models['dream_model'] = dream_model
         params['deam_layer'] = dream_layer
 
-    # # Cartoon model
-    # if 'cartoon' in model_name:
-    #     # Initialize Mediapipe Face Detection
-    #     mp_face_detection = mp.solutions.face_detection
-    #     face_detection = mp_face_detection.FaceDetection(min_detection_confidence=0.5)
-    #
-    #     params['face_detection'] = face_detection
+    # Cartoon model
+    if 'cartoon' in model_name:
+        # Initialize Mediapipe Face Detection
+        mp_face_detection = mp.solutions.face_detection
+        face_detection = mp_face_detection.FaceDetection(min_detection_confidence=0.5)
+
+        params['face_detection'] = face_detection
 
     return models, params
 
-def transform_frame_style_transfer(models, frame, img_load_size, style_image_path, prev_style_image, output_width, output_height):
+def transform_frame_style_transfer(models, frame, img_load_size, style_image_path, prev_style_image):
 
     # Unpack models
     style_transfer_model = models['style_transfer_model']
@@ -97,16 +97,21 @@ def transform_frame_style_transfer(models, frame, img_load_size, style_image_pat
     frame = cv2.resize(frame, (img_load_size, img_load_size))
 
     # Load new style image
-    style_image = cv2.imread(style_image_path)  # Replace with your style image path
-    # If loading failed, stick to previous style
-    if not isinstance(style_image, np.ndarray):
+    if os.path.isfile(style_image_path):
+        style_image = cv2.imread(style_image_path)
+        # If loading failed, stick to previous style
+        if not isinstance(style_image, np.ndarray):
+            style_image = prev_style_image
+        # If it worked, update previous style
+        elif style_image.shape != prev_style_image.shape:
+            prev_style_image = style_image
+        elif (style_image != prev_style_image).any():
+            prev_style_image = style_image
+    else:
+        # Load previous image
         style_image = prev_style_image
-    # If it worked, update previous style
-    elif style_image.shape != prev_style_image.shape:
-        prev_style_image = style_image
-    elif (style_image != prev_style_image).any():
-        prev_style_image = style_image
 
+    # Convevrt color
     style_image = cv2.cvtColor(style_image, cv2.COLOR_BGR2RGB)
 
     # Convert frame to RGB
@@ -117,12 +122,10 @@ def transform_frame_style_transfer(models, frame, img_load_size, style_image_pat
 
     # Convert back to BGR for OpenCV display
     frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
-    # Resize output frame
-    frame = cv2.resize(frame, (output_width, output_height))
 
-    return frame
+    return frame, prev_style_image
 
-def transform_frame_cyclegan(models, frame, img_load_size, opt, transform, output_width, output_height):
+def transform_frame_cyclegan(models, frame, img_load_size, opt, transform):
     # Unpack model
     cyclegan_model = models['cyclegan_model']
 
@@ -142,8 +145,6 @@ def transform_frame_cyclegan(models, frame, img_load_size, opt, transform, outpu
 
     # Convert the output image to a format suitable for OpenCV
     frame = cv2.cvtColor(output_image, cv2.COLOR_RGB2BGR)
-    # Resize output frame
-    frame = cv2.resize(frame, (output_width, output_height))
 
     return frame
 
@@ -172,7 +173,7 @@ def transform_frame_pych(frame, frame_count, amplitude=20, wavelength=75, frame_
 
     return psychedelic
 
-def transform_frame_dream(models, frame, img_load_size, output_width, output_height):
+def transform_frame_dream(models, frame, img_load_size):
 
     # Unpack model
     dream_model = models['dream_model']
@@ -184,13 +185,14 @@ def transform_frame_dream(models, frame, img_load_size, output_width, output_hei
     frame = apply_deepdream(frame, dream_model, img_size=img_load_size)
     # Convert back to BGR for OpenCV display
     frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
-    # Resize output frame
-    frame = cv2.resize(frame, (output_width, output_height))
 
     return frame
 
-def transform_frame_cartoon(frame, face_effects, face_detection, face_text):
+def transform_frame_cartoon(frame, face_effects, face_detection, face_text, img_load_size):
+    # Resize frame
+    frame = cv2.resize(frame, (img_load_size, img_load_size))
 
+    # Apply filter
     frame = cartoonify(frame)
 
     # Detect faces
@@ -331,7 +333,7 @@ def add_math_effect(image, face_coords, text="E=mc^2"):
                     cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 0), 2)
         for i in range(10):
             center = (np.random.randint(x_min, x_max), np.random.randint(y_min, y_max))
-            radius = np.random.randint(5, 15)
+            radius = np.random.randint(1, 3)
             color = tuple(np.random.randint(0, 255, 3).tolist())
             cv2.circle(image, center, radius, color, -1)
 
