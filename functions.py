@@ -13,78 +13,83 @@ import tensorflow_hub as hub
 from torchvision import transforms
 from models import create_model
 import mediapipe as mp
+import json
 
+# Load config
+with open('config.json') as f:
+    config_dict = json.load(f)[0]
+style_image_path = config_dict['style_image_path']
+style_transfer_model_path = config_dict['style_transfer_model_path']
 
-def define_models_params(model_name, img_load_size, output_width, output_height, save_output_path, dream_model_layer, gpu_ids):
+def define_models_params(img_load_size, output_width, output_height, save_output_path, dream_model_layer, gpu_ids):
     models = {}
     params = {}
-    # YOLO model
-    if 'yolo' in model_name:
-        # Load the YOLO11 model
-        yolo_model = YOLO("yolo11n.pt")
-        models['yolo_model'] = yolo_model
 
-    # Style transfer model
-    if 'style_transfer' in model_name:
-        # Load the pre-trained style transfer model
-        style_transfer_model = hub.load('https://tfhub.dev/google/magenta/arbitrary-image-stylization-v1-256/2')
-        style_image_path = 'input/style.jpg'
-        prev_style_image = cv2.imread(style_image_path)
+    # ----- YOLO model ----- #
+    # Load the YOLO11 model
+    yolo_model = YOLO("yolo11n.pt")
+    models['yolo_model'] = yolo_model
 
-        models['style_transfer_model'] = style_transfer_model
-        params['style_image_path'] = style_image_path
-        params['prev_style_image'] = prev_style_image
+    # ----- Style transfer model ----- #
+    # Load the pre-trained style transfer model
+    style_transfer_model = hub.load(style_transfer_model_path)
 
-    # Cyclegans models
-    if 'cyclegan' in model_name:
-        # Define model parameters
-        sys.argv = [
-            'test.py',  # Script name
-            '--no_dropout',
-            '--gpu_ids', f'{gpu_ids}',
-        ]
+    prev_style_image = cv2.imread(style_image_path)
 
-        # Define gpu or cpu device
+    models['style_transfer_model'] = style_transfer_model
+    params['prev_style_image'] = prev_style_image
+
+    # ----- Cyclegans models ----- #
+    # Define model parameters
+    sys.argv = [
+        'test.py',  # Script name
+        '--no_dropout',
+        '--gpu_ids', f'{gpu_ids}',
+    ]
+
+    # Define transforms for webcam frames
+    transform = transforms.Compose([
+        transforms.ToPILImage(),
+        transforms.Resize((img_load_size, img_load_size)),
+        transforms.ToTensor(),
+        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+    ])
+
+    # Load all models
+    cyclegan_models = ['horse2zebra_pretrained', 'style_vangogh_pretrained']
+    for model_name in cyclegan_models:
         opt = TestOptions().parse()  # Get default options
-        opt.name = model_name.split('cyclegan_')[-1]
+        opt.name = model_name
         opt.load_size = img_load_size
         opt.output_width = output_width
         opt.output_height = output_height
         opt.save_output_path = save_output_path
 
-        # Define transforms for webcam frames
-        transform = transforms.Compose([
-            transforms.ToPILImage(),
-            transforms.Resize((img_load_size, img_load_size)),
-            transforms.ToTensor(),
-            transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
-        ])
-
         # Initialize CycleGAN model
         cyclegan_model = create_model(opt)  # Create the CycleGAN model
         cyclegan_model.setup(opt)  # Load the pre-trained weights
 
-        models['cyclegan_model'] = cyclegan_model
-        params['opt'] = opt
-        params['transform'] = transform
+        models[model_name] = cyclegan_model
 
-    # DeepDream model
-    if 'dream' in model_name:
-        # Load pre-trained InceptionV3 model
-        model = InceptionV3(include_top=False, weights='imagenet')
-        dream_layer = model.get_layer(f'mixed{dream_model_layer}')  # Layer to "dream" from
-        dream_model = tf.keras.Model(inputs=model.input, outputs=dream_layer.output)
+    # Save transform and last opt (only used for gpu ids)
+    params['opt'] = opt
+    params['transform'] = transform
 
-        models['dream_model'] = dream_model
-        params['deam_layer'] = dream_layer
+    # ----- DeepDream model ----- #
+    # Load pre-trained InceptionV3 model
+    model = InceptionV3(include_top=False, weights='imagenet')
+    dream_layer = model.get_layer(f'mixed{dream_model_layer}')  # Layer to "dream" from
+    dream_model = tf.keras.Model(inputs=model.input, outputs=dream_layer.output)
 
-    # Cartoon model
-    if 'cartoon' in model_name:
-        # Initialize Mediapipe Face Detection
-        mp_face_detection = mp.solutions.face_detection
-        face_detection = mp_face_detection.FaceDetection(min_detection_confidence=0.5)
+    models['dream_model'] = dream_model
+    params['deam_layer'] = dream_layer
 
-        params['face_detection'] = face_detection
+    # ----- Cartoon model ----- #
+    # Initialize Mediapipe Face Detection
+    mp_face_detection = mp.solutions.face_detection
+    face_detection = mp_face_detection.FaceDetection(min_detection_confidence=0.5)
+
+    params['face_detection'] = face_detection
 
     return models, params
 
@@ -125,9 +130,10 @@ def transform_frame_style_transfer(models, frame, img_load_size, style_image_pat
 
     return frame, prev_style_image
 
-def transform_frame_cyclegan(models, frame, img_load_size, opt, transform):
+def transform_frame_cyclegan(models, model_name, frame, img_load_size, opt, transform):
     # Unpack model
-    cyclegan_model = models['cyclegan_model']
+    cyclegan_model_name = model_name.split('cyclegan_')[-1]
+    cyclegan_model = models[cyclegan_model_name]
 
     # Resize frame
     frame = cv2.resize(frame, (img_load_size, img_load_size))

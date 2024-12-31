@@ -3,6 +3,8 @@ import os
 from datetime import datetime
 import functions
 import tensorflow as tf
+import json
+# style_transfer / cyclegan_horse2zebra_pretrained / cyclegan_style_vangogh_pretrained / yolo / psych / dream / cartoon
 
 
 #  Optimize tensorflow GPU usage
@@ -11,19 +13,16 @@ gpus = tf.config.list_physical_devices('GPU')
 for gpu in gpus:
     tf.config.experimental.set_memory_growth(gpu, True)
 
-# style_transfer / cyclegan_horse2zebra_pretrained / cyclegan_style_vangogh_pretrained / yolo / psych / dream / cartoon
-model_name = 'yolo_cartoon'
-img_load_size = 256  # only for style and dream models
+# Define parameters
+img_load_size = 64  # only for style and dream models
 output_width = 1360
 output_height = 768
 save_output_path = ''
 dream_model_layer = '1'  # only for dream model
-face_text = 'Hola'  # only for cartoon model
-face_effects = True  # only for cartoon model
 gpu_ids = 0
 
 # Define models
-models, params = functions.define_models_params(model_name=model_name, img_load_size=img_load_size, output_width=output_width,
+models, params = functions.define_models_params(img_load_size=img_load_size, output_width=output_width,
                                                 output_height=output_height, save_output_path=save_output_path,
                                                 dream_model_layer=dream_model_layer, gpu_ids=gpu_ids)
 
@@ -46,6 +45,17 @@ if save_output_path:
 frame_count = 0
 while True:
 
+    # Load config
+    with open('config.json') as f:
+        try:
+            config_dict = json.load(f)[0]
+        except:
+            pass
+    model_name = config_dict['model_name']
+    style_image_path = config_dict['style_image_path']
+    face_text = config_dict['face_text']
+    face_effects = config_dict['face_effects']
+
     # Read frame
     ret, frame = cam.read()
     if not ret:
@@ -53,27 +63,45 @@ while True:
 
     # Apply models
     if 'cyclegan' in model_name:
-        frame = functions.transform_frame_cyclegan(models=models, frame=frame, img_load_size=img_load_size,
-                                                   opt=params['opt'], transform=params['transform'])
+        try:
+            frame = functions.transform_frame_cyclegan(models=models, model_name=model_name, frame=frame, img_load_size=img_load_size,
+                                                       opt=params['opt'], transform=params['transform'])
+        except:
+            pass
 
     if 'yolo' in model_name:
-        frame = functions.transform_frame_yolo(models=models, frame=frame)
+        try:
+            frame = functions.transform_frame_yolo(models=models, frame=frame)
+        except:
+            pass
 
     if 'style_transfer' in model_name:
-        frame, params['prev_style_image'] = (
+        try:
+            frame, params['prev_style_image'] = (
             functions.transform_frame_style_transfer(models=models, frame=frame, img_load_size=img_load_size,
-                                                     style_image_path=params['style_image_path'],
+                                                     style_image_path=style_image_path,
                                                      prev_style_image=params['prev_style_image']))
+        except:
+            pass
 
     if 'psych' in model_name:
-        frame = functions.transform_frame_pych(frame=frame, frame_count=frame_count, amplitude=20, wavelength=150, frame_count_div=3)
+        try:
+            frame = functions.transform_frame_pych(frame=frame, frame_count=frame_count, amplitude=20, wavelength=150, frame_count_div=3)
+        except:
+            pass
 
     if 'dream' in model_name:
-        frame = functions.transform_frame_dream(models=models, frame=frame, img_load_size=img_load_size)
+        try:
+            frame = functions.transform_frame_dream(models=models, frame=frame, img_load_size=img_load_size)
+        except:
+            pass
 
     if 'cartoon' in model_name:
-        frame = functions.transform_frame_cartoon(frame=frame, face_effects=face_effects, face_detection=params['face_detection'],
-                                                  face_text=face_text,  img_load_size=img_load_size)
+        try:
+            frame = functions.transform_frame_cartoon(frame=frame, face_effects=face_effects, face_detection=params['face_detection'],
+                                                      face_text=face_text,  img_load_size=img_load_size)
+        except:
+            pass
 
     # Resize output frame
     frame = cv2.resize(frame, (output_width, output_height))
