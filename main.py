@@ -4,7 +4,7 @@ from datetime import datetime
 import functions
 import tensorflow as tf
 import json
-# style_transfer / cyclegan_horse2zebra_pretrained / cyclegan_style_vangogh_pretrained / yolo / psych / dream / cartoon
+# style_transfer / cyclegan_horse2zebra_pretrained / cyclegan_style_vangogh_pretrained / yolo / psych / dream
 
 
 #  Optimize tensorflow GPU usage
@@ -93,13 +93,6 @@ while True:
     if 'dream' in model_name:
         try:
             frame = functions.transform_frame_dream(models=models, frame=frame, img_load_size=img_load_size)
-        except:
-            pass
-
-    if 'cartoon' in model_name:
-        try:
-            frame = functions.transform_frame_cartoon(frame=frame, face_effects=face_effects, face_detection=params['face_detection'],
-                                                      face_text=face_text,  img_load_size=img_load_size)
         except:
             pass
 

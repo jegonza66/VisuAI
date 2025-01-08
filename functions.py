@@ -12,7 +12,6 @@ from options.test_options import TestOptions
 import tensorflow_hub as hub
 from torchvision import transforms
 from models import create_model
-import mediapipe as mp
 import json
 
 # Load config
@@ -83,13 +82,6 @@ def define_models_params(img_load_size, output_width, output_height, save_output
 
     models['dream_model'] = dream_model
     params['deam_layer'] = dream_layer
-
-    # ----- Cartoon model ----- #
-    # Initialize Mediapipe Face Detection
-    mp_face_detection = mp.solutions.face_detection
-    face_detection = mp_face_detection.FaceDetection(min_detection_confidence=0.5)
-
-    params['face_detection'] = face_detection
 
     return models, params
 
@@ -191,28 +183,6 @@ def transform_frame_dream(models, frame, img_load_size):
     frame = apply_deepdream(frame, dream_model, img_size=img_load_size)
     # Convert back to BGR for OpenCV display
     frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
-
-    return frame
-
-def transform_frame_cartoon(frame, face_effects, face_detection, face_text, img_load_size):
-    # Resize frame
-    frame = cv2.resize(frame, (img_load_size, img_load_size))
-
-    # Detect faces
-    if face_effects:
-        results = face_detection.process(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
-        face_coords = []
-        if results.detections:
-            for detection in results.detections:
-                bbox = detection.location_data.relative_bounding_box
-                face_coords.append((bbox.xmin, bbox.ymin, bbox.xmin + bbox.width, bbox.ymin + bbox.height))
-
-        # Add math effects
-        if face_text:
-            frame = add_math_effect(frame, face_coords, text=face_text)
-
-    # Apply filter
-    frame = cartoonify(frame)
 
     return frame
 
@@ -360,20 +330,3 @@ def quantize_colors(image, k=8):
     quantized = quantized.reshape(image.shape)
 
     return quantized
-
-def cartoonify(image):
-    # Apply bilateral filter to smooth colors
-    smoothed = cv2.bilateralFilter(image, d=9, sigmaColor=75, sigmaSpace=75)
-
-    # Convert to grayscale and detect edges
-    gray = cv2.cvtColor(smoothed, cv2.COLOR_BGR2GRAY)
-    edges = cv2.adaptiveThreshold(
-        gray, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 9, 9
-    )
-
-    # Quantize colors (reduce color palette)
-    quantized = quantize_colors(image)
-
-    # Combine quantized image with edges
-    cartoon = cv2.bitwise_and(quantized, quantized, mask=edges)
-    return cartoon
