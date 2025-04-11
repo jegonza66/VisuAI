@@ -1,13 +1,14 @@
 import cv2
 import os
 from datetime import datetime
+import time
 import functions
 import tensorflow as tf
 import json
 # style_transfer / cyclegan_horse2zebra_pretrained / cyclegan_style_vangogh_pretrained / yolo / psych / dream
 
 
-#  Optimize tensorflow GPU usage
+# Optimize tensorflow GPU usage
 tf.config.optimizer.set_jit(True)
 gpus = tf.config.list_physical_devices('GPU')
 for gpu in gpus:
@@ -43,6 +44,8 @@ if save_output_path:
 
 # Run
 frame_count = 0
+# Get last update image time
+last_update_time = time.time()
 while True:
 
     # Load config
@@ -51,10 +54,19 @@ while True:
             config_dict = json.load(f)[0]
         except:
             pass
+
+    # Read parameters
     model_name = config_dict['model_name']
     style_image_path = config_dict['style_image_path']
+    style_images_dir = config_dict['style_images_dir']
+    bpm = config_dict['bpm']
+    beats = config_dict['beats']
+    randomize = config_dict['randomize']
     face_text = config_dict['face_text']
     face_effects = config_dict['face_effects']
+
+    # Get time to update
+    current_time = time.time()
 
     # Read frame
     ret, frame = cam.read()
@@ -77,6 +89,15 @@ while True:
 
     if 'style_transfer' in model_name:
         try:
+            if current_time - last_update_time >= beats / bpm:
+                if randomize:
+                    try:
+                        style_image_path = functions.randomize_style_image(style_images_dir=style_images_dir, current_image=os.path.basename(style_image_path))
+                    except:
+                        style_image_path = style_image_path
+                else:
+                    style_image_path = style_image_path
+                last_update_time = current_time
             frame, params['prev_style_image'] = (
             functions.transform_frame_style_transfer(models=models, frame=frame, img_load_size=img_load_size,
                                                      style_image_path=style_image_path,

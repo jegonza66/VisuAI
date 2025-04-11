@@ -13,6 +13,7 @@ import tensorflow_hub as hub
 from torchvision import transforms
 from models import create_model
 import json
+import random
 
 # Load config
 with open('config.json') as f:
@@ -84,6 +85,27 @@ def define_models_params(img_load_size, output_width, output_height, save_output
     params['deam_layer'] = dream_layer
 
     return models, params
+
+def randomize_style_image(style_images_dir, current_image=None):
+    """
+    Randomly selects a .jpg image from the specified directory, avoiding repetition of the current image.
+    """
+    # List all .jpg files in the directory
+    jpg_files = [f for f in os.listdir(style_images_dir) if f.endswith('.jpg')]
+    if not jpg_files:
+        raise ValueError(f"No .jpg files found in directory: {style_images_dir}")
+
+    # Remove the current image from the list if it exists
+    if current_image in jpg_files:
+        jpg_files.remove(current_image)
+
+    # If only the current image exists, return it
+    if not jpg_files:
+        return os.path.join(style_images_dir, current_image)
+
+    # Select a random .jpg file
+    random_image = random.choice(jpg_files)
+    return os.path.join(style_images_dir, random_image)
 
 def transform_frame_style_transfer(models, frame, img_load_size, style_image_path, prev_style_image):
 
