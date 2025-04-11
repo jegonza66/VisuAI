@@ -1,0 +1,9 @@
+[{"model_name": "yolo_style_transfer",
+  "face_text":  "Hola",
+  "face_effects": true,
+  "style_transfer_model_path":  "G:/My Drive/live_webcam_filter/checkpoints/arbitrary-image-stylization-v1-tensorflow1-256-v2",
+  "style_image_path":   "input/style.jpg",
+  "style_images_dir": "input/styles/",
+  "bpm": 60,
+  "beats": 4,
+  "randomize": true}]
