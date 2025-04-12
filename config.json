@@ -1,19 +1,19 @@
 [
   {
-    "model_name": "yolo+style_transfer",
+    "model_name": "style_transfer",
     "face_text": "",
     "face_effects": false,
     "style_transfer_model_path": "G:/My Drive/live_webcam_filter/checkpoints/arbitrary-image-stylization-v1-tensorflow1-256-v2",
-    "style_image_path": "input/style.jpg",
-    "style_images_dir": "G:/My Drive/live_webcam_filter/input/styles",
-    "bpm": 60,
-    "beats": 16,
+    "style_image_path": "G:/My Drive/live_webcam_filter/styles/cubismo.jpg",
+    "style_images_dir": "G:/My Drive/live_webcam_filter/styles",
+    "bpm": 120,
+    "beats": 58,
     "randomize": true,
-    "output_width": 1360,
-    "output_height": 768,
+    "output_width": 1500,
+    "output_height": 800,
     "dream_layer": "1",
-    "img_load_size": 64,
-    "gpu_ids": 0,
+    "img_load_size": 256,
+    "gpu_ids": [],
     "save_output_path": ""
   }
 ]

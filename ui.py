@@ -4,61 +4,72 @@ import json
 import os
 import threading
 import subprocess
-from PIL import Image, ImageTk  # Add PIL import for image handling
+from PIL import Image, ImageTk
+import tensorflow as tf
 
 class WebcamFilterUI:
     def __init__(self):
         self.root = tk.Tk()
-        self.root.title("Webcam Filter Controls")
-        self.root.geometry("1200x650")  # Slightly taller to accommodate logo
+        self.root.title("VisuAI Controls")
+        self.root.geometry("950x480")
+        
+        # Check GPU availability
+        self.gpu_available = len(tf.config.list_physical_devices('GPU')) > 0
         
         # Load initial config
         self.load_config()
         
-        # Create main frame
+        # Create main frame with more padding
         self.main_frame = ttk.Frame(self.root, padding="20")
         self.main_frame.pack(fill=tk.BOTH, expand=True)
         
-        # Configure grid weights for main frame
+        # Configure column weights to distribute space evenly
         self.main_frame.columnconfigure(0, weight=1)
-        self.main_frame.rowconfigure(1, weight=1)  # Controls frame row
+        self.main_frame.columnconfigure(1, weight=1)
+        self.main_frame.columnconfigure(2, weight=1)
         
         # Create logo frame at the top
         self.logo_frame = ttk.Frame(self.main_frame)
-        self.logo_frame.grid(row=0, column=0, sticky="ew", pady=(0, 20))
+        self.logo_frame.grid(row=0, column=0, columnspan=3, sticky="w", pady=(0, 20))
         
         # Load and display logo
         try:
             logo_image = Image.open("visuai.png")
-            # Resize logo to appropriate size (e.g., 200px wide)
-            logo_image = logo_image.resize((200, int(200 * logo_image.height / logo_image.width)))
+            # Resize logo to appropriate size (e.g., 150px wide)
+            logo_image = logo_image.resize((150, int(150 * logo_image.height / logo_image.width)))
             self.logo_photo = ImageTk.PhotoImage(logo_image)
             logo_label = ttk.Label(self.logo_frame, image=self.logo_photo)
             logo_label.pack(side=tk.LEFT)
         except Exception as e:
             print(f"Could not load logo: {e}")
         
-        # Create controls frame below logo
-        self.controls_frame = ttk.Frame(self.main_frame)
-        self.controls_frame.grid(row=1, column=0, sticky="nsew")
+        # Create three columns with more padding between them
+        self.left_frame = ttk.Frame(self.main_frame, padding="10")
+        self.middle_frame = ttk.Frame(self.main_frame, padding="10")
+        self.right_frame = ttk.Frame(self.main_frame, padding="10")
         
-        # Configure grid weights for controls frame
-        self.controls_frame.columnconfigure(0, weight=1)
-        self.controls_frame.columnconfigure(1, weight=1)
-        self.controls_frame.columnconfigure(2, weight=1)
-        self.controls_frame.rowconfigure(0, weight=1)
+        self.left_frame.grid(row=1, column=0, sticky="nsew", padx=10)
+        self.middle_frame.grid(row=1, column=1, sticky="nsew", padx=10)
+        self.right_frame.grid(row=1, column=2, sticky="nsew", padx=10)
         
-        # Create three columns
-        self.left_frame = ttk.Frame(self.controls_frame, padding="10")
-        self.middle_frame = ttk.Frame(self.controls_frame, padding="10")
-        self.right_frame = ttk.Frame(self.controls_frame, padding="10")
+        # Initialize all UI variables first
+        self.style_path_var = tk.StringVar(value=self.config["style_image_path"])
+        self.style_dir_var = tk.StringVar(value=self.config["style_images_dir"])
+        self.randomize_var = tk.BooleanVar(value=self.config["randomize"])
+        self.beats_var = tk.StringVar(value=str(self.config["beats"]))
+        self.bpm_var = tk.StringVar(value=str(self.config["bpm"]))
+        self.width_var = tk.StringVar(value=str(self.config.get("output_width", 1500)))
+        self.height_var = tk.StringVar(value=str(self.config.get("output_height", 780)))
+        self.dream_layer_var = tk.StringVar(value=self.config.get("dream_layer", "1"))
+        self.img_load_size_var = tk.StringVar(value=str(self.config.get("img_load_size", 64)))
+        self.save_output_var = tk.StringVar(value=self.config.get("save_output_path", ""))
+        self.use_gpu_var = tk.BooleanVar(value=self.gpu_available)  # Default to True if GPU available
         
-        self.left_frame.grid(row=0, column=0, sticky="nsew")
-        self.middle_frame.grid(row=0, column=1, sticky="nsew")
-        self.right_frame.grid(row=0, column=2, sticky="nsew")
-        
-        # Left Column: Models and Model Setup
+        # Create all UI elements
+        # Left Column: Models and basic Model Setup
         ttk.Label(self.left_frame, text="Models:", font=('Arial', 12, 'bold')).grid(row=0, column=0, columnspan=2, pady=(0, 10), sticky=tk.W)
+        
+        # Model checkboxes
         self.model_vars = {}
         model_options = ["yolo", "style_transfer", "cyclegan_horse2zebra_pretrained", 
                         "cyclegan_style_vangogh_pretrained", "psych", "dream"]
@@ -71,91 +82,81 @@ class WebcamFilterUI:
         ttk.Label(self.left_frame, text="Model Setup:", font=('Arial', 12, 'bold')).grid(row=len(model_options)+2, column=0, columnspan=2, pady=(20, 5), sticky=tk.W)
         
         ttk.Label(self.left_frame, text="Image Load Size:").grid(row=len(model_options)+3, column=0, sticky=tk.W)
-        self.img_load_size_var = tk.StringVar(value=str(self.config.get("img_load_size", 64)))
         img_load_size_entry = ttk.Entry(self.left_frame, textvariable=self.img_load_size_var, width=10)
         img_load_size_entry.grid(row=len(model_options)+3, column=1, sticky=tk.W, padx=(5, 0))
         img_load_size_entry.bind('<KeyRelease>', self.update_config)
         
-        ttk.Label(self.left_frame, text="GPU IDs:").grid(row=len(model_options)+4, column=0, sticky=tk.W)
-        self.gpu_ids_var = tk.StringVar(value=str(self.config.get("gpu_ids", 0)))
-        gpu_ids_entry = ttk.Entry(self.left_frame, textvariable=self.gpu_ids_var, width=10)
-        gpu_ids_entry.grid(row=len(model_options)+4, column=1, sticky=tk.W, padx=(5, 0))
-        gpu_ids_entry.bind('<KeyRelease>', self.update_config)
+        # Dream Layer
+        ttk.Label(self.left_frame, text="Dream Layer:").grid(row=len(model_options)+4, column=0, sticky=tk.W)
+        dream_layer_combo = ttk.Combobox(self.left_frame, textvariable=self.dream_layer_var, 
+                                       values=["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"], width=10)
+        dream_layer_combo.grid(row=len(model_options)+4, column=1, sticky=tk.W, padx=(5, 0))
+        dream_layer_combo.bind('<<ComboboxSelected>>', self.update_config)
         
-        # Middle Column: Style and Timing Controls
-        # Style Image Path
+        # GPU Checkbox
+        use_gpu_check = ttk.Checkbutton(self.left_frame, text="Use GPU (if available)", 
+                                      variable=self.use_gpu_var, command=self.update_config)
+        use_gpu_check.grid(row=len(model_options)+5, column=0, columnspan=2, sticky=tk.W, pady=2)
+        
+        # Middle Column: Style Controls and Timing
         ttk.Label(self.middle_frame, text="Style Image:", font=('Arial', 12, 'bold')).grid(row=0, column=0, columnspan=2, pady=(0, 5), sticky=tk.W)
-        self.style_path_var = tk.StringVar(value=self.config["style_image_path"])
-        style_entry = ttk.Entry(self.middle_frame, textvariable=self.style_path_var, width=30)
+        style_entry = ttk.Entry(self.middle_frame, textvariable=self.style_path_var, width=40)  # Made wider
         style_entry.grid(row=1, column=0, sticky=(tk.W, tk.E), padx=(0, 5))
         ttk.Button(self.middle_frame, text="Browse", command=self.browse_style_image).grid(row=1, column=1, sticky=tk.E)
         
-        # Style Images Directory
         ttk.Label(self.middle_frame, text="Style Images Directory:", font=('Arial', 12, 'bold')).grid(row=2, column=0, columnspan=2, pady=(20, 5), sticky=tk.W)
-        self.style_dir_var = tk.StringVar(value=self.config["style_images_dir"])
-        style_dir_entry = ttk.Entry(self.middle_frame, textvariable=self.style_dir_var, width=30)
+        style_dir_entry = ttk.Entry(self.middle_frame, textvariable=self.style_dir_var, width=40)  # Made wider
         style_dir_entry.grid(row=3, column=0, sticky=(tk.W, tk.E), padx=(0, 5))
         ttk.Button(self.middle_frame, text="Browse", command=self.browse_style_dir).grid(row=3, column=1, sticky=tk.E)
         
-        # Randomize Style
-        self.randomize_var = tk.BooleanVar(value=self.config["randomize"])
         ttk.Checkbutton(self.middle_frame, text="Randomize Style", variable=self.randomize_var, 
                        command=self.update_config).grid(row=4, column=0, columnspan=2, pady=(20, 5), sticky=tk.W)
         
-        # BPM and Beats Controls
         ttk.Label(self.middle_frame, text="Timing Controls:", font=('Arial', 12, 'bold')).grid(row=5, column=0, columnspan=2, pady=(20, 5), sticky=tk.W)
         
-        ttk.Label(self.middle_frame, text="BPM:").grid(row=6, column=0, sticky=tk.W)
-        self.bpm_var = tk.StringVar(value=str(self.config["bpm"]))
-        bpm_entry = ttk.Entry(self.middle_frame, textvariable=self.bpm_var, width=10)
-        bpm_entry.grid(row=6, column=1, sticky=tk.W, padx=(5, 0))
-        bpm_entry.bind('<KeyRelease>', self.update_config)
+        # Create a frame for timing controls to keep elements together
+        timing_frame = ttk.Frame(self.middle_frame)
+        timing_frame.grid(row=6, column=0, columnspan=2, sticky=tk.W)
         
-        ttk.Label(self.middle_frame, text="Beats:").grid(row=7, column=0, sticky=tk.W)
-        self.beats_var = tk.StringVar(value=str(self.config["beats"]))
-        beats_entry = ttk.Entry(self.middle_frame, textvariable=self.beats_var, width=10)
-        beats_entry.grid(row=7, column=1, sticky=tk.W, padx=(5, 0))
+        ttk.Label(timing_frame, text="Beats:").grid(row=0, column=0, sticky=tk.W)
+        beats_entry = ttk.Entry(timing_frame, textvariable=self.beats_var, width=10)
+        beats_entry.grid(row=0, column=1, sticky=tk.W, padx=(5, 20))  # Added right padding
         beats_entry.bind('<KeyRelease>', self.update_config)
         
-        # Right Column: Face Controls, Resolution, and Output
-        # Output Resolution
-        ttk.Label(self.right_frame, text="Output Resolution:", font=('Arial', 12, 'bold')).grid(row=0, column=0, columnspan=2, pady=(0, 5), sticky=tk.W)
+        ttk.Label(timing_frame, text="BPM:").grid(row=0, column=2, sticky=tk.W)
+        bpm_entry = ttk.Entry(timing_frame, textvariable=self.bpm_var, width=10)
+        bpm_entry.grid(row=0, column=3, sticky=tk.W, padx=(5, 0))
+        bpm_entry.bind('<KeyRelease>', self.update_config)
         
-        ttk.Label(self.right_frame, text="Width:").grid(row=1, column=0, sticky=tk.W)
-        self.width_var = tk.StringVar(value="1360")
+        # Right Column: Output Settings
+        ttk.Label(self.right_frame, text="Output Settings:", font=('Arial', 12, 'bold')).grid(row=0, column=0, columnspan=2, pady=(0, 5), sticky=tk.W)
+        
+        ttk.Label(self.right_frame, text="Resolution:", font=('Arial', 11, 'bold')).grid(row=1, column=0, columnspan=2, pady=(10, 5), sticky=tk.W)
+        
+        ttk.Label(self.right_frame, text="Width:").grid(row=2, column=0, sticky=tk.W)
         width_entry = ttk.Entry(self.right_frame, textvariable=self.width_var, width=10)
-        width_entry.grid(row=1, column=1, sticky=tk.W, padx=(5, 0))
+        width_entry.grid(row=2, column=1, sticky=tk.W, padx=(5, 0))
         width_entry.bind('<KeyRelease>', self.update_config)
         
-        ttk.Label(self.right_frame, text="Height:").grid(row=2, column=0, sticky=tk.W)
-        self.height_var = tk.StringVar(value="768")
+        ttk.Label(self.right_frame, text="Height:").grid(row=3, column=0, sticky=tk.W)
         height_entry = ttk.Entry(self.right_frame, textvariable=self.height_var, width=10)
-        height_entry.grid(row=2, column=1, sticky=tk.W, padx=(5, 0))
+        height_entry.grid(row=3, column=1, sticky=tk.W, padx=(5, 0))
         height_entry.bind('<KeyRelease>', self.update_config)
         
-        # Dream Model Layer
-        ttk.Label(self.right_frame, text="Dream Layer:", font=('Arial', 12, 'bold')).grid(row=3, column=0, columnspan=2, pady=(20, 5), sticky=tk.W)
-        self.dream_layer_var = tk.StringVar(value="1")
-        dream_layer_combo = ttk.Combobox(self.right_frame, textvariable=self.dream_layer_var, 
-                                       values=["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"], width=10)
-        dream_layer_combo.grid(row=4, column=0, columnspan=2, sticky=tk.W)
-        dream_layer_combo.bind('<<ComboboxSelected>>', self.update_config)
-        
-        # Save Output Path
-        ttk.Label(self.right_frame, text="Save Output:", font=('Arial', 12, 'bold')).grid(row=5, column=0, columnspan=2, pady=(20, 5), sticky=tk.W)
-        self.save_output_var = tk.StringVar(value=self.config.get("save_output_path", ""))
-        save_output_entry = ttk.Entry(self.right_frame, textvariable=self.save_output_var, width=30)
-        save_output_entry.grid(row=6, column=0, columnspan=2, sticky=(tk.W, tk.E))
+        # Save Output Path moved to right column
+        ttk.Label(self.right_frame, text="Save Output:", font=('Arial', 11, 'bold')).grid(row=4, column=0, columnspan=2, pady=(20, 5), sticky=tk.W)
+        save_output_entry = ttk.Entry(self.right_frame, textvariable=self.save_output_var, width=40)
+        save_output_entry.grid(row=5, column=0, columnspan=2, sticky=(tk.W, tk.E))
         save_output_entry.bind('<KeyRelease>', self.update_config)
-        
+
         # Run Button - Bottom Center
-        self.run_button = ttk.Button(self.main_frame, text="Run Webcam Filter", command=self.run_webcam_filter)
-        self.run_button.grid(row=2, column=0, pady=20)
+        self.run_button = ttk.Button(self.main_frame, text="Run VisuAI", command=self.run_webcam_filter)
+        self.run_button.grid(row=2, column=0, columnspan=3, pady=20)
         
         # Store widgets that should be disabled after running
         self.model_setup_widgets = [
             img_load_size_entry,
-            gpu_ids_entry,
+            use_gpu_check,
             dream_layer_combo,
             save_output_entry
         ]
@@ -167,16 +168,17 @@ class WebcamFilterUI:
         except:
             self.config = {
                 "model_name": "yolo",
-                "style_image_path": "input/style.jpg",
-                "style_images_dir": "input/styles/",
-                "bpm": 60,
-                "beats": 4,
+                "style_image_path": "styles/style.jpg",
+                "style_images_dir": "styles/",
+                "bpm": 90,
+                "beats": 32,
                 "randomize": True,
-                "face_text": "Hola",
-                "face_effects": True,
-                "img_load_size": 64,
-                "gpu_ids": 0,
-                "save_output_path": ""
+                "img_load_size": 256,
+                "gpu_ids": [0] if self.gpu_available else [],  # Use first GPU if available, empty list for CPU
+                "save_output_path": "",
+                "output_width": 1500,
+                "output_height": 780,
+                "dream_layer": "1"
             }
     
     def save_config(self):
@@ -195,11 +197,11 @@ class WebcamFilterUI:
             "bpm": int(self.bpm_var.get()) if self.bpm_var.get().isdigit() else 60,
             "beats": int(self.beats_var.get()) if self.beats_var.get().isdigit() else 4,
             "randomize": self.randomize_var.get(),
-            "output_width": int(self.width_var.get()) if self.width_var.get().isdigit() else 1360,
-            "output_height": int(self.height_var.get()) if self.height_var.get().isdigit() else 768,
+            "output_width": int(self.width_var.get()) if self.width_var.get().isdigit() else 1500,
+            "output_height": int(self.height_var.get()) if self.height_var.get().isdigit() else 780,
             "dream_layer": self.dream_layer_var.get(),
             "img_load_size": int(self.img_load_size_var.get()) if self.img_load_size_var.get().isdigit() else 64,
-            "gpu_ids": int(self.gpu_ids_var.get()) if self.gpu_ids_var.get().isdigit() else 0,
+            "gpu_ids": [0] if self.use_gpu_var.get() else [],  # Use first GPU if checked, empty list for CPU
             "save_output_path": self.save_output_var.get()
         })
         self.save_config()
@@ -233,9 +235,9 @@ class WebcamFilterUI:
         self.process = subprocess.Popen(['python', 'main.py', '--run'])
         
         # Add a button to stop the filter
-        self.stop_button = ttk.Button(self.main_frame, text="Stop Webcam Filter", 
+        self.stop_button = ttk.Button(self.main_frame, text="Stop VisuAI", 
                                     command=self.stop_webcam_filter)
-        self.stop_button.grid(row=2, column=0, pady=10)
+        self.stop_button.grid(row=2, column=0, columnspan=3, pady=20)  # Changed to same position as run button
     
     def stop_webcam_filter(self):
         if hasattr(self, 'process'):
