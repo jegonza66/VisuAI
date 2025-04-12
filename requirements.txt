@@ -1,3 +1,4 @@
+ipkernel
 dominate
 visdom
 wandb

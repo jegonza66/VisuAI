@@ -14,12 +14,44 @@ from torchvision import transforms
 from models import create_model
 import json
 import random
+import time
+import threading
 
 # Load config
 with open('config.json') as f:
     config_dict = json.load(f)[0]
 style_image_path = config_dict['style_image_path']
 style_transfer_model_path = config_dict['style_transfer_model_path']
+
+def read_config(config_dict, output_width, output_height, dream_model_layer, models, params, img_load_size, save_output_path, gpu_ids):
+    """Reads the config file and updates parameters when changes are detected"""
+    while True:
+        try:
+            with open('config.json') as f:
+                new_config = json.load(f)[0]
+                if new_config != config_dict:
+                    config_dict.update(new_config)
+                    # Update resolution if changed
+                    if 'output_width' in new_config:
+                        output_width = new_config['output_width']
+                    if 'output_height' in new_config:
+                        output_height = new_config['output_height']
+                    # Update dream layer if changed
+                    if 'dream_layer' in new_config:
+                        dream_model_layer = new_config['dream_layer']
+                        # Reinitialize models with new parameters
+                        models, params = define_models_params(
+                            img_load_size=img_load_size, 
+                            output_width=output_width,
+                            output_height=output_height, 
+                            save_output_path=save_output_path,
+                            dream_model_layer=dream_model_layer, 
+                            gpu_ids=gpu_ids
+                        )
+        except:
+            pass
+        time.sleep(0.1)  # Check config every 100ms
+    return config_dict, output_width, output_height, dream_model_layer, models, params
 
 def define_models_params(img_load_size, output_width, output_height, save_output_path, dream_model_layer, gpu_ids):
     models = {}
@@ -146,7 +178,7 @@ def transform_frame_style_transfer(models, frame, img_load_size, style_image_pat
 
 def transform_frame_cyclegan(models, model_name, frame, img_load_size, opt, transform):
     # Unpack model
-    cyclegan_model_name = model_name.split('cyclegan_')[-1]
+    cyclegan_model_name = model_name.split('cyclegan_')[-1].split('+')[0]  # Get name between cyclegan_ and +
     cyclegan_model = models[cyclegan_model_name]
 
     # Resize frame
@@ -181,7 +213,7 @@ def transform_frame_yolo(models, frame):
 
     return frame
 
-def transform_frame_pych(frame, frame_count, amplitude=20, wavelength=75, frame_count_div=5):
+def transform_frame_psych(frame, frame_count, amplitude=20, wavelength=75, frame_count_div=5):
     # Apply hue shift
     hue_shifted = hue_shift(frame, (frame_count) % 180)
 
@@ -315,27 +347,6 @@ def hue_shift(image, shift_value):
     hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
     hsv[:, :, 0] = (hsv[:, :, 0] + shift_value) % 180  # Shift hue channel
     return cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
-
-
-# Cartoon functions
-def add_math_effect(image, face_coords, text="E=mc^2"):
-    h, w, _ = image.shape
-    for face in face_coords:
-        x_min = int(face[0] * w)
-        y_min = int(face[1] * h)
-        x_max = int(face[2] * w)
-        y_max = int(face[3] * h)
-
-        # Add trippy math equations and shapes
-        cv2.putText(image, text, (x_min, y_min - 10),
-                    cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 0), 2)
-        for i in range(10):
-            center = (np.random.randint(x_min, x_max), np.random.randint(y_min, y_max))
-            radius = np.random.randint(1, 3)
-            color = tuple(np.random.randint(0, 255, 3).tolist())
-            cv2.circle(image, center, radius, color, -1)
-
-    return image
 
 
 def quantize_colors(image, k=8):
