@@ -1,6 +1,3 @@
-ipkernel
-dominate
-visdom
 wandb
 opencv-python
 ipython
