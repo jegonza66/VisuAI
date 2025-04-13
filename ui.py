@@ -62,7 +62,7 @@ class WebcamFilterUI:
         self.height_var = tk.StringVar(value=str(self.config.get("output_height", 780)))
         self.dream_layer_var = tk.StringVar(value=self.config.get("dream_layer", "1"))
         self.img_load_size_var = tk.StringVar(value=str(self.config.get("img_load_size", 64)))
-        self.save_output_var = tk.StringVar(value=self.config.get("save_output_path", ""))
+        self.save_output_var = tk.BooleanVar(value=bool(self.config.get("save_output_path", "")))
         self.use_gpu_var = tk.BooleanVar(value=self.gpu_available)  # Default to True if GPU available
         
         # Create all UI elements
@@ -79,24 +79,25 @@ class WebcamFilterUI:
                           command=self.update_config).grid(row=i+1, column=0, columnspan=2, sticky=tk.W, pady=2)
         
         # Model Setup Parameters
-        ttk.Label(self.left_frame, text="Model Setup:", font=('Arial', 12, 'bold')).grid(row=len(model_options)+2, column=0, columnspan=2, pady=(20, 5), sticky=tk.W)
+        model_setup_frame = ttk.LabelFrame(self.left_frame, text="Model Setup", padding="5")
+        model_setup_frame.grid(row=len(model_options)+2, column=0, columnspan=2, sticky="nsew", pady=(20, 5))
         
-        ttk.Label(self.left_frame, text="Image Load Size:").grid(row=len(model_options)+3, column=0, sticky=tk.W)
-        img_load_size_entry = ttk.Entry(self.left_frame, textvariable=self.img_load_size_var, width=10)
-        img_load_size_entry.grid(row=len(model_options)+3, column=1, sticky=tk.W, padx=(5, 0))
+        ttk.Label(model_setup_frame, text="Image Load Size:").grid(row=0, column=0, sticky=tk.W)
+        img_load_size_entry = ttk.Entry(model_setup_frame, textvariable=self.img_load_size_var, width=10)
+        img_load_size_entry.grid(row=0, column=1, sticky=tk.W, padx=(5, 0))
         img_load_size_entry.bind('<KeyRelease>', self.update_config)
         
         # Dream Layer
-        ttk.Label(self.left_frame, text="Dream Layer:").grid(row=len(model_options)+4, column=0, sticky=tk.W)
-        dream_layer_combo = ttk.Combobox(self.left_frame, textvariable=self.dream_layer_var, 
+        ttk.Label(model_setup_frame, text="Dream Layer:").grid(row=1, column=0, sticky=tk.W)
+        dream_layer_combo = ttk.Combobox(model_setup_frame, textvariable=self.dream_layer_var, 
                                        values=["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"], width=10)
-        dream_layer_combo.grid(row=len(model_options)+4, column=1, sticky=tk.W, padx=(5, 0))
+        dream_layer_combo.grid(row=1, column=1, sticky=tk.W, padx=(5, 0))
         dream_layer_combo.bind('<<ComboboxSelected>>', self.update_config)
         
         # GPU Checkbox
-        use_gpu_check = ttk.Checkbutton(self.left_frame, text="Use GPU (if available)", 
+        use_gpu_check = ttk.Checkbutton(model_setup_frame, text="Use GPU (if available)", 
                                       variable=self.use_gpu_var, command=self.update_config)
-        use_gpu_check.grid(row=len(model_options)+5, column=0, columnspan=2, sticky=tk.W, pady=2)
+        use_gpu_check.grid(row=2, column=0, columnspan=2, sticky=tk.W, pady=2)
         
         # Middle Column: Style Controls and Timing
         ttk.Label(self.middle_frame, text="Style Image:", font=('Arial', 12, 'bold')).grid(row=0, column=0, columnspan=2, pady=(0, 5), sticky=tk.W)
@@ -131,40 +132,56 @@ class WebcamFilterUI:
         # Right Column: Output Settings
         ttk.Label(self.right_frame, text="Output Settings:", font=('Arial', 12, 'bold')).grid(row=0, column=0, columnspan=2, pady=(0, 5), sticky=tk.W)
         
-        ttk.Label(self.right_frame, text="Resolution:", font=('Arial', 11, 'bold')).grid(row=1, column=0, columnspan=2, pady=(10, 5), sticky=tk.W)
+        # Resolution Section with bounding box
+        resolution_frame = ttk.LabelFrame(self.right_frame, text="Resolution", padding="5")
+        resolution_frame.grid(row=1, column=0, columnspan=2, sticky="nsew", pady=(10, 5))
         
-        ttk.Label(self.right_frame, text="Width:").grid(row=2, column=0, sticky=tk.W)
-        width_entry = ttk.Entry(self.right_frame, textvariable=self.width_var, width=10)
-        width_entry.grid(row=2, column=1, sticky=tk.W, padx=(5, 0))
+        ttk.Label(resolution_frame, text="Width:").grid(row=0, column=0, sticky=tk.W)
+        width_entry = ttk.Entry(resolution_frame, textvariable=self.width_var, width=10)
+        width_entry.grid(row=0, column=1, sticky=tk.W, padx=(5, 0))
         width_entry.bind('<KeyRelease>', self.update_config)
         
-        ttk.Label(self.right_frame, text="Height:").grid(row=3, column=0, sticky=tk.W)
-        height_entry = ttk.Entry(self.right_frame, textvariable=self.height_var, width=10)
-        height_entry.grid(row=3, column=1, sticky=tk.W, padx=(5, 0))
+        ttk.Label(resolution_frame, text="Height:").grid(row=1, column=0, sticky=tk.W)
+        height_entry = ttk.Entry(resolution_frame, textvariable=self.height_var, width=10)
+        height_entry.grid(row=1, column=1, sticky=tk.W, padx=(5, 0))
         height_entry.bind('<KeyRelease>', self.update_config)
         
-        # Save Output Path moved to right column
-        ttk.Label(self.right_frame, text="Save Output:", font=('Arial', 11, 'bold')).grid(row=4, column=0, columnspan=2, pady=(20, 5), sticky=tk.W)
-        save_output_entry = ttk.Entry(self.right_frame, textvariable=self.save_output_var, width=40)
-        save_output_entry.grid(row=5, column=0, columnspan=2, sticky=(tk.W, tk.E))
-        save_output_entry.bind('<KeyRelease>', self.update_config)
+        # Save Output Section with bounding box
+        save_frame = ttk.LabelFrame(self.right_frame, text="Save Output", padding="5")
+        save_frame.grid(row=2, column=0, columnspan=2, sticky="nsew", pady=(20, 5))
+        
+        save_output_check = ttk.Checkbutton(save_frame, text="Save video", variable=self.save_output_var)
+        save_output_check.grid(row=0, column=0, columnspan=2, sticky=(tk.W, tk.E))
+        save_output_check.bind('<Button-1>', self.update_config)
 
         # Run Button - Bottom Center
-        self.run_button = ttk.Button(self.main_frame, text="Run VisuAI", command=self.run_webcam_filter)
-        self.run_button.grid(row=2, column=0, columnspan=3, pady=20)
+        self.button_frame = ttk.Frame(self.main_frame)
+        self.button_frame.grid(row=2, column=0, columnspan=3, pady=20)
+        
+        self.run_button = ttk.Button(self.button_frame, text="Run VisuAI", command=self.run_webcam_filter)
+        self.run_button.pack()
+        
+        self.stop_button = ttk.Button(self.button_frame, text="Stop VisuAI", command=self.stop_webcam_filter)
+        self.stop_button.pack(side=tk.LEFT, padx=5)
+        self.stop_button.pack_forget()  # Hide stop button initially
         
         # Store widgets that should be disabled after running
         self.model_setup_widgets = [
             img_load_size_entry,
             use_gpu_check,
             dream_layer_combo,
-            save_output_entry
+            save_output_check
         ]
         
     def load_config(self):
         try:
             with open('config.json', 'r') as f:
                 self.config = json.load(f)[0]
+                # Convert absolute paths to relative if they exist
+                if 'style_image_path' in self.config:
+                    self.config['style_image_path'] = os.path.relpath(self.config['style_image_path'])
+                if 'style_images_dir' in self.config:
+                    self.config['style_images_dir'] = os.path.relpath(self.config['style_images_dir'])
         except:
             self.config = {
                 "model_name": "yolo",
@@ -182,8 +199,15 @@ class WebcamFilterUI:
             }
     
     def save_config(self):
+        # Make a copy of the config to avoid modifying the original
+        config_to_save = self.config.copy()
+        # Convert paths to absolute before saving
+        if 'style_image_path' in config_to_save:
+            config_to_save['style_image_path'] = os.path.abspath(config_to_save['style_image_path'])
+        if 'style_images_dir' in config_to_save:
+            config_to_save['style_images_dir'] = os.path.abspath(config_to_save['style_images_dir'])
         with open('config.json', 'w') as f:
-            json.dump([self.config], f, indent=2)
+            json.dump([config_to_save], f, indent=2)
     
     def update_config(self, *args):
         # Get selected models
@@ -202,7 +226,7 @@ class WebcamFilterUI:
             "dream_layer": self.dream_layer_var.get(),
             "img_load_size": int(self.img_load_size_var.get()) if self.img_load_size_var.get().isdigit() else 64,
             "gpu_ids": [0] if self.use_gpu_var.get() else [],  # Use first GPU if checked, empty list for CPU
-            "save_output_path": self.save_output_var.get()
+            "save_output_path": "output/" if self.save_output_var.get() else ""
         })
         self.save_config()
     
@@ -227,17 +251,14 @@ class WebcamFilterUI:
     
     def run_webcam_filter(self):
         # Disable the run button and model setup widgets while the filter is running
-        self.run_button.config(state='disabled')
+        self.run_button.config(state='disabled', text="Running...")
+        self.run_button.pack(side=tk.LEFT, padx=5)  # Move run button to the side
+        self.stop_button.pack(side=tk.LEFT, padx=5)  # Show stop button
         for widget in self.model_setup_widgets:
             widget.config(state='disabled')
         
         # Start the webcam filter in a separate process
         self.process = subprocess.Popen(['python', 'main.py', '--run'])
-        
-        # Add a button to stop the filter
-        self.stop_button = ttk.Button(self.main_frame, text="Stop VisuAI", 
-                                    command=self.stop_webcam_filter)
-        self.stop_button.grid(row=2, column=0, columnspan=3, pady=20)  # Changed to same position as run button
     
     def stop_webcam_filter(self):
         if hasattr(self, 'process'):
@@ -245,12 +266,11 @@ class WebcamFilterUI:
             self.process = None
         
         # Re-enable the run button and model setup widgets
-        self.run_button.config(state='normal')
+        self.run_button.config(state='normal', text="Run VisuAI")
+        self.run_button.pack()  # Center run button again
+        self.stop_button.pack_forget()  # Hide stop button
         for widget in self.model_setup_widgets:
             widget.config(state='normal')
-        
-        # Remove the stop button
-        self.stop_button.destroy()
     
     def run(self):
         self.root.mainloop()
