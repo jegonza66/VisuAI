@@ -10,7 +10,7 @@ from ui import run_ui
 import sys
 
 
-def run_webcam_filter():
+def visuai():
     # Read initial config
     with open('config.json', 'r') as f:
         config = json.load(f)[0]
@@ -43,12 +43,13 @@ def run_webcam_filter():
 
     # Define the codec and create VideoWriter object
     if config.get('save_output_path'):
-        print(f'saving output to {config["save_output_path"]} folder')
-        os.makedirs(config['save_output_path'], exist_ok=True)
+        output_path = config['save_output_path']
+        print(f'saving output to {output_path} folder')
+        os.makedirs(output_path, exist_ok=True)
         start_time = datetime.today().strftime('%Y-%m-%d_%H-%M')
         # Use XVID codec instead of mp4v
         fourcc = cv2.VideoWriter_fourcc(*'XVID')
-        out = cv2.VideoWriter(f'{config["save_output_path"]}/{start_time}.avi', fourcc, fps, 
+        out = cv2.VideoWriter(f'{output_path}/{start_time}.avi', fourcc, fps, 
                             (config['output_width'], config['output_height']))
 
     # Run
@@ -151,6 +152,6 @@ def run_webcam_filter():
 
 if __name__ == "__main__":
     if len(sys.argv) > 1 and sys.argv[1] == "--run":
-        run_webcam_filter()
+        visuai()
     else:
         run_ui()
