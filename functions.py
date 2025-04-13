@@ -20,8 +20,9 @@ import threading
 # Load config
 with open('config.json') as f:
     config_dict = json.load(f)[0]
-style_image_path = config_dict['style_image_path']
-style_transfer_model_path = config_dict['style_transfer_model_path']
+    # Convert paths to absolute for internal use
+    style_image_path = os.path.abspath(config_dict['style_image_path'])
+    style_transfer_model_path = os.path.abspath(config_dict['style_transfer_model_path'])
 
 def read_config(config_dict, output_width, output_height, dream_model_layer, models, params, img_load_size, save_output_path, gpu_ids):
     """Reads the config file and updates parameters when changes are detected"""
@@ -59,7 +60,9 @@ def define_models_params(img_load_size, output_width, output_height, save_output
 
     # ----- YOLO model ----- #
     # Load the YOLO11 model
+    device = "cuda" if gpu_ids else "cpu"
     yolo_model = YOLO("yolo11n.pt")
+    yolo_model.to(device)  # Move model to appropriate device
     models['yolo_model'] = yolo_model
 
     # ----- Style transfer model ----- #
@@ -76,7 +79,7 @@ def define_models_params(img_load_size, output_width, output_height, save_output
     sys.argv = [
         'test.py',  # Script name
         '--no_dropout',
-        '--gpu_ids', f'{gpu_ids}',
+        '--gpu_ids', str(gpu_ids[0]) if gpu_ids else '',  # Pass first GPU ID or empty string for CPU
     ]
 
     # Define transforms for webcam frames
