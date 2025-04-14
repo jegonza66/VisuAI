@@ -26,7 +26,7 @@ def visuai():
     
     # Define models with initial config
     models, params = functions.define_models_params(
-        img_load_size=config.get('img_load_size', 64),
+        img_load_size=config.get('img_load_size', 256),
         output_width=config.get('output_width', 1500),
         output_height=config.get('output_height', 780),
         save_output_path=config.get('save_output_path', 'output/'),
@@ -75,50 +75,50 @@ def visuai():
                 raise ValueError('No camera detected')
 
             # Apply models in sequence
-            selected_models = config_dict.get('model_name', '').split('+')
+            model_name = config_dict.get('model_name', '')
             
-            for model_name in selected_models:
-                if 'cyclegan' in model_name:
-                    try:
-                        frame = functions.transform_frame_cyclegan(models=models, model_name=model_name, frame=frame, 
-                                                                 img_load_size=config_dict.get('img_load_size', 64),
-                                                                 opt=params['opt'], transform=params['transform'])
-                    except:
-                        pass
+            # for model_name in selected_models:
+            if 'cyclegan' in model_name:
+                try:
+                    frame = functions.transform_frame_cyclegan(models=models, model_name=model_name, frame=frame,
+                                                             img_load_size=config_dict.get('img_load_size', 256),
+                                                             opt=params['opt'], transform=params['transform'])
+                except:
+                    pass
 
-                if 'yolo' in model_name:
-                    try:
-                        frame = functions.transform_frame_yolo(models=models, frame=frame)
-                    except:
-                        pass
+            if 'yolo' in model_name:
+                try:
+                    frame = functions.transform_frame_yolo(models=models, frame=frame, img_load_size=config_dict.get('img_load_size', 256))
+                except:
+                    pass
 
-                if 'style_transfer' in model_name:
-                    try:
-                        current_time = time.time()
-                        if current_time - last_update_time >= config_dict.get('beats', 4) * 60 / config_dict.get('bpm', 60):
-                            if config_dict.get('randomize', True):
-                                try:
-                                    style_image_path = functions.randomize_style_image(
-                                        style_images_dir=config_dict.get('style_images_dir', ''), 
-                                        current_image=os.path.basename(config_dict.get('style_image_path', '')))
-                                except:
-                                    style_image_path = config_dict.get('style_image_path', '')
-                            else:
+            if 'style_transfer' in model_name:
+                try:
+                    current_time = time.time()
+                    if current_time - last_update_time >= config_dict.get('beats', 4) * 60 / config_dict.get('bpm', 60):
+                        if config_dict.get('randomize', True):
+                            try:
+                                style_image_path = functions.randomize_style_image(
+                                    style_images_dir=config_dict.get('style_images_dir', ''),
+                                    current_image=os.path.basename(config_dict.get('style_image_path', '')))
+                            except:
                                 style_image_path = config_dict.get('style_image_path', '')
-                            last_update_time = current_time
-                        frame, params['prev_style_image'] = (
-                        functions.transform_frame_style_transfer(models=models, frame=frame, 
-                                                               img_load_size=config_dict.get('img_load_size', 64),
-                                                               style_image_path=style_image_path,
-                                                               prev_style_image=params['prev_style_image']))
-                    except:
-                        pass
+                        else:
+                            style_image_path = config_dict.get('style_image_path', '')
+                        last_update_time = current_time
+                    frame, params['prev_style_image'] = (
+                    functions.transform_frame_style_transfer(models=models, frame=frame,
+                                                           img_load_size=config_dict.get('img_load_size', 256),
+                                                           style_image_path=style_image_path,
+                                                           prev_style_image=params['prev_style_image']))
+                except:
+                    pass
 
-                if 'psych' in model_name:
-                    try:
-                        frame = functions.transform_frame_psych(frame=frame, frame_count=frame_count, amplitude=20, wavelength=150, frame_count_div=3)
-                    except:
-                        pass
+            if 'psych' in model_name:
+                try:
+                    frame = functions.transform_frame_psych(frame=frame, frame_count=frame_count, amplitude=20, wavelength=150, frame_count_div=3)
+                except:
+                    pass
 
             # Resize output frame
             frame = cv2.resize(frame, (config_dict.get('output_width', 1360), config_dict.get('output_height', 768)))
