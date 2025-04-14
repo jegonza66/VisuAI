@@ -5,7 +5,6 @@ import tensorflow as tf
 from tensorflow.keras.applications.inception_v3 import preprocess_input
 import torch
 from util.util import tensor2im
-from tensorflow.keras.applications import InceptionV3
 from ultralytics import YOLO
 import sys
 from options.test_options import TestOptions
@@ -15,7 +14,7 @@ from models import create_model
 import json
 import random
 import time
-import threading
+
 
 # Load config
 with open('config.json') as f:
@@ -37,18 +36,10 @@ def read_config(config_dict, output_width, output_height, img_load_size, save_ou
                         output_width = new_config['output_width']
                     if 'output_height' in new_config:
                         output_height = new_config['output_height']
-                    # Reinitialize models with new parameters
-                    models, params = define_models_params(
-                        img_load_size=img_load_size,
-                        output_width=output_width,
-                        output_height=output_height,
-                        save_output_path=save_output_path,
-                        gpu_ids=gpu_ids
-                    )
         except:
             pass
         time.sleep(0.1)  # Check config every 100ms
-    return config_dict, output_width, output_height, models, params
+    return config_dict, output_width, output_height
 
 def define_models_params(img_load_size, output_width, output_height, save_output_path, gpu_ids):
     models = {}
