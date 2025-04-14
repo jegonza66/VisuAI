@@ -190,13 +190,13 @@ def transform_frame_cyclegan(models, model_name, frame, img_load_size, opt, tran
 
     return frame
 
-def transform_frame_yolo(models, frame):
+def transform_frame_yolo(models, frame, img_load_size):
 
     # unpack model
     yolo_model = models['yolo_model']
 
-    # Run YOLO11 tracking on the frame, persisting tracks between frames
-    results = yolo_model.track(frame, persist=True, verbose=False)
+    # Run YOLO11 prediction on the frame
+    results = yolo_model.predict(frame, verbose=False)
 
     # Visualize the results on the frame
     frame = results[0].plot()
