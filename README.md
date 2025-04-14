@@ -1,6 +1,6 @@
 # VisuAI - Real-time AI Visual Effects
 
-![VisuAI Logo](images/logo.png)
+![VisuAI Logo](readme_imgs/Visuai_logo.png)
 
 VisuAI is an innovative real-time video processing application that brings the power of AI to your webcam. Transform your video feed with stunning visual effects powered by state-of-the-art machine learning models.
 
@@ -19,19 +19,24 @@ VisuAI is an innovative real-time video processing application that brings the p
 
 ## 🖥️ Interface
 
-![VisuAI Interface](images/ui.png)
+![VisuAI Interface](readme_imgs/Visuai_ui.png)
 
 The intuitive interface allows you to:
 
 1. **Model Selection**: Choose which AI models to apply to your video
-2. **Style Controls**: 
-   - Select style images
-   - Randomize styles
-   - Adjust timing parameters
-3. **Output Settings**:
-   - Set resolution
-   - Enable/disable video recording
+2. **Style Images**: 
+  - Select a style image for style transfer
+  - Choose a directory for random style selection
+  - Enable/disable style randomization
+3. **Timing Controls**: Change the image style to the rythm of music!
+  - Set BPM (beats per minute)
+  - Configure a number of beats to change the style of the image
+4. **Output Settings**:
+   - Adjust output video resolution
+   - Enable/disable video saving
    - Configure GPU usage
+
+Your settings are automatically saved and will be restored when you restart the application.
 
 ## 🚀 Getting Started
 
@@ -44,25 +49,6 @@ The intuitive interface allows you to:
    ```bash
    python main.py
    ```
-
-## ⚙️ Settings
-
-All settings can be easily configured through the user interface:
-
-- **Model Selection**: Choose which AI models to apply to your video feed
-- **Style Images**: 
-  - Select a style image for style transfer
-  - Choose a directory for random style selection
-  - Enable/disable style randomization
-- **Timing Controls**:
-  - Set BPM (beats per minute)
-  - Configure number of beats
-- **Output Settings**:
-  - Adjust video resolution
-  - Enable/disable video saving
-  - Toggle GPU acceleration
-
-Your settings are automatically saved and will be restored when you restart the application.
 
 ## 🎯 System Requirements
 
