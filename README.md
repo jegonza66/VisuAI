@@ -11,11 +11,12 @@ VisuAI is an innovative real-time video processing application that brings the p
   - YOLO object detection
   - Style Transfer
   - CycleGAN transformations (based on [pytorch-CycleGAN-and-pix2pix](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix))
-  - DeepDream effects
   - Psychedelic filters
+- **Virtual Camera Support**: Stream your AI-enhanced video to web conferencing apps like Google Meet, Microsoft Teams, and Zoom
+- **Sync with Music**: Change the style of the image based on the rhythm of the music
 - **Customizable Settings**: Fine-tune your experience with adjustable parameters
 - **GPU Acceleration**: Optional GPU support for faster processing
-- **Video Recording**: Save your transformed video to the output folder
+- **Video Recording**: Save your transformed video
 
 ## 🖥️ Interface
 
@@ -35,6 +36,7 @@ The intuitive interface allows you to:
    - Adjust output video resolution
    - Enable/disable video saving
    - Configure GPU usage
+   - Rout output to a virtual camera for web conferencing apps (meet, zoom, teams, etc.)
 
 Your settings are automatically saved and will be restored when you restart the application.
 
@@ -55,10 +57,25 @@ Your settings are automatically saved and will be restored when you restart the 
    ```bash
     windows_install_requirements.sh
     ```
-3. Run the application:
+4. Run the application:
    ```bash
    python main.py
    ```
+
+## 🌐 Web Video Conference Support
+
+VisuAI can stream its AI-enhanced video feed to web conferencing apps like Google Meet, Microsoft Teams, Zoom, and others using a virtual camera powered by `pyvirtualcam`.
+
+- **Windows Setup**:
+  - **Install OBS Studio**: OBS provides the virtual camera driver required by `pyvirtualcam`. Download it from [obsproject.com](https://obsproject.com/) and install it.
+  - **Configuration**: Run `main.py`, and VisuAI will output the processed feed to the "OBS Virtual Camera." Select this camera in your conferencing app’s video settings.
+- **Usage**: Open your conferencing app, go to video settings, and choose "OBS Virtual Camera" to see VisuAI’s effects live during calls.
+- **Troubleshooting**:
+  - If the virtual camera doesn’t appear, verify OBS is installed and its virtual camera is stopped.
+  - Ensure no other apps are using the virtual camera.
+  - Check the console for errors if the feed doesn’t display.
+
+**Note**: On Linux, install `v4l2loopback` (`sudo apt-get install v4l2loopback-dkms`) instead of OBS. On macOS, `pyvirtualcam` typically works without additional software.
 
 ## 🎯 System Requirements
 

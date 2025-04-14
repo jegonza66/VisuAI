@@ -8,6 +8,7 @@ import json
 import threading
 from ui import run_ui
 import sys
+import pyvirtualcam
 
 
 def visuai():
@@ -54,6 +55,12 @@ def visuai():
         fourcc = cv2.VideoWriter_fourcc(*'XVID')
         out = cv2.VideoWriter(f'{output_path}/{start_time}.avi', fourcc, fps, 
                             (config['output_width'], config['output_height']))
+
+    # Setup virtual cam only if flag is True
+    v_cam = None
+    if config.get('use_virtual_cam'):
+        v_cam = pyvirtualcam.Camera(width=config['output_width'], height=config['output_height'], fps=30)
+        print("Virtual camera started")
 
     # Run
     frame_count = 0
@@ -121,10 +128,16 @@ def visuai():
                     pass
 
             # Resize output frame
-            frame = cv2.resize(frame, (config_dict.get('output_width', 1360), config_dict.get('output_height', 768)))
+            frame = cv2.resize(frame, (config_dict.get('output_width', 1500), config_dict.get('output_height', 800)))
 
             # Display the captured frame
             cv2.imshow('VisuAI', frame)
+
+            # Optionally route to virtual camera
+            if config.get('use_virtual_cam') and v_cam is not None:
+                frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)  # Convert RGB to RGB for OBS
+                v_cam.send(frame_rgb)
+                v_cam.sleep_until_next_frame()
 
             # Save frame if output path is set
             if config_dict.get('save_output_bool'):

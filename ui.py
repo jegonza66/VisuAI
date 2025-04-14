@@ -6,6 +6,7 @@ import subprocess
 from PIL import Image, ImageTk
 import tensorflow as tf
 import cv2
+import pyvirtualcam
 
 
 class WebcamFilterUI:
@@ -13,12 +14,20 @@ class WebcamFilterUI:
         self.root = tk.Tk()
         self.root.title("VisuAI Controls")
         self.root.geometry("950x480")
-        
-        # Check GPU availability
-        self.gpu_available = len(tf.config.list_physical_devices('GPU')) > 0
-        
+
         # Load initial config
         self.load_config()
+
+        # Check GPU availability
+        self.gpu_available = len(tf.config.list_physical_devices('GPU')) > 0
+
+        # Check if virtual camera is available (OBS enabled)
+        try:
+            pyvirtualcam.Camera(width=self.config.get("output_width", 1500), height=self.config.get("output_height", 800), fps=30)
+            self.vcam_available = True
+        except:
+            # If no virtual camera detected, disable the run button and disp´lay No camera detected in text
+            self.vcam_available = False
         
         # Create main frame with more padding
         self.main_frame = ttk.Frame(self.root, padding="20")
@@ -65,6 +74,7 @@ class WebcamFilterUI:
         self.save_output_bool = tk.BooleanVar(value=bool(self.config.get("save_output_bool", False)))
         self.save_output_path = tk.StringVar(value=str(self.config.get("save_output_path", "output/")))
         self.use_gpu_var = tk.BooleanVar(value=self.gpu_available)  # Default to True if GPU available
+        self.use_virtual_cam = tk.BooleanVar(value=self.config.get("use_virtual_cam", False))  # Default to True if GPU available
         
         # Create all UI elements
         # Left Column: Models and basic Model Setup
@@ -72,12 +82,12 @@ class WebcamFilterUI:
         
         # Model checkboxes
         self.model_vars = {}
-        model_options = ["yolo", "style_transfer", "cyclegan_horse2zebra_pretrained", 
-                        "cyclegan_style_vangogh_pretrained", "psych"]
+        model_options = ["Object Recognition", "Style Transfer", "Horse 2 Zebra",
+                        "Van Gogh", "Psychedelic"]
         for i, model in enumerate(model_options):
             self.model_vars[model] = tk.BooleanVar(value=model in self.config.get("model_name", ""))
             ttk.Checkbutton(self.left_frame, text=model, variable=self.model_vars[model],
-                          command=self.update_config).grid(row=i+1, column=0, columnspan=2, sticky=tk.W, pady=2)
+                            command=self.update_config).grid(row=i+1, column=0, columnspan=2, sticky=tk.W, pady=2)
         
         # Model Setup Parameters
         model_setup_frame = ttk.LabelFrame(self.left_frame, text="Model Setup", padding="5")
@@ -93,8 +103,9 @@ class WebcamFilterUI:
                                       variable=self.use_gpu_var, command=self.update_config)
         use_gpu_check.grid(row=2, column=0, columnspan=2, sticky=tk.W, pady=2)
         if not self.gpu_available:
-            use_gpu_check.state(['disabled'])
-        
+            # use_gpu_check.state(['disabled'])
+            use_gpu_check.config(state='disabled', text="Use GPU (No GPU detected)")
+
         # Middle Column: Style Controls and Timing
         ttk.Label(self.middle_frame, text="Style Image:", font=('Arial', 12, 'bold')).grid(row=0, column=0, columnspan=2, pady=(0, 5), sticky=tk.W)
         style_entry = ttk.Entry(self.middle_frame, textvariable=self.style_path_var, width=40)  # Made wider
@@ -109,7 +120,7 @@ class WebcamFilterUI:
         ttk.Checkbutton(self.middle_frame, text="Randomize Style", variable=self.randomize_var, 
                        command=self.update_config).grid(row=4, column=0, columnspan=2, pady=(20, 5), sticky=tk.W)
         
-        ttk.Label(self.middle_frame, text="Timing Controls:", font=('Arial', 12, 'bold')).grid(row=5, column=0, columnspan=2, pady=(20, 5), sticky=tk.W)
+        ttk.Label(self.middle_frame, text="Music Sync:", font=('Arial', 12, 'bold')).grid(row=5, column=0, columnspan=2, pady=(20, 5), sticky=tk.W)
         
         # Create a frame for timing controls to keep elements together
         timing_frame = ttk.Frame(self.middle_frame)
@@ -154,6 +165,20 @@ class WebcamFilterUI:
         save_output_text.grid(row=1, column=1, columnspan=2, sticky=(tk.W, tk.E))
         save_output_text.bind('<KeyRelease>', self.update_config)
 
+        # Save Output Section with bounding box
+        v_cam_frame = ttk.LabelFrame(self.right_frame, text="Virtual Cam routing", padding="5")
+        v_cam_frame.grid(row=3, column=0, columnspan=2, sticky="nsew", pady=(20, 5))
+
+        vcam_check = ttk.Checkbutton(v_cam_frame, text="Route cam", variable=self.use_virtual_cam, command=self.update_config)
+        vcam_check.grid(row=0, column=0, columnspan=2, sticky=(tk.W, tk.E))
+
+        # Check if virtual camera is available (OBS enabled)
+        if not self.vcam_available:
+            # If no v camera detected, uncheck box and disable
+            self.use_virtual_cam.set(False)
+            self.update_config()
+            vcam_check.config(state='disabled', text="No virtual camera available.\nPlease check OBS settings.")
+
         # Run Button - Bottom Center
         self.button_frame = ttk.Frame(self.main_frame)
         self.button_frame.grid(row=2, column=0, columnspan=3, pady=20)
@@ -176,33 +201,39 @@ class WebcamFilterUI:
 
         # Store widgets that should be disabled after running
         self.model_setup_widgets = [
-            # use_gpu_check,
+            img_load_size_entry,
             save_output_check,
-            save_output_text
+            save_output_text,
         ]
+        # Store widgets that should be disabled because not available hardware/software
+        self.unavailable_widgets = [use_gpu_check]
+
+        # Add vcam to the corresponding list
+        if not self.vcam_available:
+            self.unavailable_widgets.append(vcam_check)
+        else:
+            self.model_setup_widgets.append(vcam_check)
         
     def load_config(self):
         try:
             with open('config.json', 'r') as f:
                 self.config = json.load(f)[0]
-                # Convert absolute paths to relative if they exist
-                if 'style_image_path' in self.config:
-                    self.config['style_image_path'] = os.path.relpath(self.config['style_image_path'])
-                if 'style_images_dir' in self.config:
-                    self.config['style_images_dir'] = os.path.relpath(self.config['style_images_dir'])
         except:
             self.config = {
                 "model_name": "yolo",
-                "style_image_path": "styles/style.jpg",
+                "style_transfer_model_path": "checkpoints/arbitrary-image-stylization-v1-tensorflow1-256-v2",
+                "style_image_path": "styles/cubismo.jpg",
                 "style_images_dir": "styles/",
-                "bpm": 90,
-                "beats": 32,
-                "randomize": True,
+                "bpm": 60,
+                "beats": 4,
+                "randomize": False,
                 "img_load_size": 256,
                 "gpu_ids": [0] if self.gpu_available else [],  # Use first GPU if available, empty list for CPU
-                "save_output_path": "",
+                "save_output_bool": False,
+                "save_output_path": "output/",
+                "use_virtual_cam": False,
                 "output_width": 1500,
-                "output_height": 780
+                "output_height": 800
             }
     
     def save_config(self):
@@ -212,8 +243,18 @@ class WebcamFilterUI:
             json.dump([config_to_save], f, indent=2)
     
     def update_config(self, *args):
+
+        # model names mapping
+        model_names_map = {
+            "Object Recognition": "yolo",
+            "Style Transfer": "style_transfer",
+            "Horse 2 Zebra": "cyclegan_horse2zebra_pretrained",
+            "Van Gogh": "cyclegan_style_vangogh_pretrained",
+            "Psychedelic": "psych"
+        }
+
         # Get selected models
-        selected_models = [model for model, var in self.model_vars.items() if var.get()]
+        selected_models = [model_names_map[model] for model, var in self.model_vars.items() if var.get()]
         model_name = "+".join(selected_models) if selected_models else "none"
         
         self.config.update({
@@ -228,7 +269,8 @@ class WebcamFilterUI:
             "img_load_size": int(self.img_load_size_var.get()) if self.img_load_size_var.get().isdigit() else 256,
             "gpu_ids": [0] if self.use_gpu_var.get() else [],  # Use first GPU if checked, empty list for CPU
             "save_output_bool": self.save_output_bool.get(),
-            "save_output_path": self.save_output_path.get() if self.save_output_path.get() else "output/"
+            "save_output_path": self.save_output_path.get() if self.save_output_path.get() else "output/",
+            "use_virtual_cam": self.use_virtual_cam.get()
         })
         self.save_config()
     
@@ -257,6 +299,9 @@ class WebcamFilterUI:
         self.run_button.pack(side=tk.LEFT, padx=5)  # Move run button to the side
         self.stop_button.pack(side=tk.LEFT, padx=5)  # Show stop button
         for widget in self.model_setup_widgets:
+            widget.config(state='disabled')
+
+        for widget in self.unavailable_widgets:
             widget.config(state='disabled')
         
         # Start the webcam filter in a separate process
