@@ -1,6 +1,6 @@
 # VisuAI - Real-time AI Visual Effects
 
-<img src="readme_imgs/Visuai_logo.png" width="300">
+<img src="readme_imgs/Visuai_logo.jpeg" width="300">
 
 VisuAI is an innovative real-time video processing application that brings the power of AI to your webcam. Transform your video feed with stunning visual effects powered by state-of-the-art machine learning models.
 
@@ -19,7 +19,7 @@ VisuAI is an innovative real-time video processing application that brings the p
 
 ## 🖥️ Interface
 
-![VisuAI Interface](readme_imgs/Visuai_ui.png)
+<img src="readme_imgs/Visuai_ui.png" width="700">
 
 The intuitive interface allows you to:
 

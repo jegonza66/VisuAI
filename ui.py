@@ -35,7 +35,7 @@ class WebcamFilterUI:
         
         # Load and display logo
         try:
-            logo_image = Image.open("readme_imgs/Visuai_logo.png")
+            logo_image = Image.open("readme_imgs/Visuai_logo.jpeg")
             # Resize logo to appropriate size (e.g., 150px wide)
             logo_image = logo_image.resize((150, int(150 * logo_image.height / logo_image.width)))
             self.logo_photo = ImageTk.PhotoImage(logo_image)
