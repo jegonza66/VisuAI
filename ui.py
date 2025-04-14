@@ -197,11 +197,6 @@ class WebcamFilterUI:
     def save_config(self):
         # Make a copy of the config to avoid modifying the original
         config_to_save = self.config.copy()
-        # Convert paths to absolute before saving
-        if 'style_image_path' in config_to_save:
-            config_to_save['style_image_path'] = os.path.relpath(config_to_save['style_image_path'])
-        if 'style_images_dir' in config_to_save:
-            config_to_save['style_images_dir'] = os.path.relpath(config_to_save['style_images_dir'])
         with open('config.json', 'w') as f:
             json.dump([config_to_save], f, indent=2)
     
