@@ -29,8 +29,7 @@ def visuai():
         img_load_size=config.get('img_load_size', 64),
         output_width=config.get('output_width', 1500),
         output_height=config.get('output_height', 780),
-        save_output_path=config.get('save_output_path', ''),
-        dream_model_layer=config.get('dream_layer', '1'),
+        save_output_path=config.get('save_output_path', 'output/'),
         gpu_ids=config.get('gpu_ids', [])  # Default to empty list (CPU)
     )
 
@@ -42,7 +41,7 @@ def visuai():
     fps = int(cam.get(cv2.CAP_PROP_FPS)) or 30
 
     # Define the codec and create VideoWriter object
-    if config.get('save_output_path'):
+    if config.get('save_output_bool'):
         output_path = config['save_output_path']
         print(f'saving output to {output_path} folder')
         os.makedirs(output_path, exist_ok=True)
@@ -60,8 +59,7 @@ def visuai():
 
     # Start config reading thread
     config_thread = threading.Thread(target=functions.read_config, 
-                                   args=(config_dict, config['output_width'], config['output_height'], 
-                                        config['dream_layer'], models, params, config['img_load_size'], 
+                                   args=(config_dict, config['output_width'], config['output_height'], config['img_load_size'],
                                         config['save_output_path'], config['gpu_ids']),
                                    daemon=True)
     config_thread.start()
@@ -94,7 +92,7 @@ def visuai():
                 if 'style_transfer' in model_name:
                     try:
                         current_time = time.time()
-                        if current_time - last_update_time >= config_dict.get('beats', 4) / config_dict.get('bpm', 60):
+                        if current_time - last_update_time >= config_dict.get('beats', 4) * 60 / config_dict.get('bpm', 60):
                             if config_dict.get('randomize', True):
                                 try:
                                     style_image_path = functions.randomize_style_image(
@@ -119,13 +117,6 @@ def visuai():
                     except:
                         pass
 
-                if 'dream' in model_name:
-                    try:
-                        frame = functions.transform_frame_dream(models=models, frame=frame, 
-                                                              img_load_size=config_dict.get('img_load_size', 64))
-                    except:
-                        pass
-
             # Resize output frame
             frame = cv2.resize(frame, (config_dict.get('output_width', 1360), config_dict.get('output_height', 768)))
 
@@ -133,7 +124,7 @@ def visuai():
             cv2.imshow('VisuAI', frame)
 
             # Save frame if output path is set
-            if config_dict.get('save_output_path'):
+            if config_dict.get('save_output_bool'):
                 out.write(frame)
 
             # Press 'q' to exit the loop
@@ -146,7 +137,7 @@ def visuai():
     finally:
         # Clean up
         cam.release()
-        if config_dict.get('save_output_path'):
+        if config_dict.get('save_output_bool'):
             out.release()
         cv2.destroyAllWindows()
 

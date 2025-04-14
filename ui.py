@@ -2,7 +2,6 @@ import tkinter as tk
 from tkinter import ttk, filedialog
 import json
 import os
-import threading
 import subprocess
 from PIL import Image, ImageTk
 import tensorflow as tf
@@ -34,7 +33,7 @@ class WebcamFilterUI:
         
         # Load and display logo
         try:
-            logo_image = Image.open("visuai.png")
+            logo_image = Image.open("readme_imgs/Visuai_logo.png")
             # Resize logo to appropriate size (e.g., 150px wide)
             logo_image = logo_image.resize((150, int(150 * logo_image.height / logo_image.width)))
             self.logo_photo = ImageTk.PhotoImage(logo_image)
@@ -60,9 +59,9 @@ class WebcamFilterUI:
         self.bpm_var = tk.StringVar(value=str(self.config["bpm"]))
         self.width_var = tk.StringVar(value=str(self.config.get("output_width", 1500)))
         self.height_var = tk.StringVar(value=str(self.config.get("output_height", 780)))
-        self.dream_layer_var = tk.StringVar(value=self.config.get("dream_layer", "1"))
         self.img_load_size_var = tk.StringVar(value=str(self.config.get("img_load_size", 64)))
-        self.save_output_var = tk.BooleanVar(value=bool(self.config.get("save_output_path", "")))
+        self.save_output_bool = tk.BooleanVar(value=bool(self.config.get("save_output_bool", False)))
+        self.save_output_path = tk.StringVar(value=str(self.config.get("save_output_path", "output/")))
         self.use_gpu_var = tk.BooleanVar(value=self.gpu_available)  # Default to True if GPU available
         
         # Create all UI elements
@@ -72,7 +71,7 @@ class WebcamFilterUI:
         # Model checkboxes
         self.model_vars = {}
         model_options = ["yolo", "style_transfer", "cyclegan_horse2zebra_pretrained", 
-                        "cyclegan_style_vangogh_pretrained", "psych", "dream"]
+                        "cyclegan_style_vangogh_pretrained", "psych"]
         for i, model in enumerate(model_options):
             self.model_vars[model] = tk.BooleanVar(value=model in self.config.get("model_name", ""))
             ttk.Checkbutton(self.left_frame, text=model, variable=self.model_vars[model],
@@ -87,17 +86,12 @@ class WebcamFilterUI:
         img_load_size_entry.grid(row=0, column=1, sticky=tk.W, padx=(5, 0))
         img_load_size_entry.bind('<KeyRelease>', self.update_config)
         
-        # Dream Layer
-        ttk.Label(model_setup_frame, text="Dream Layer:").grid(row=1, column=0, sticky=tk.W)
-        dream_layer_combo = ttk.Combobox(model_setup_frame, textvariable=self.dream_layer_var, 
-                                       values=["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"], width=10)
-        dream_layer_combo.grid(row=1, column=1, sticky=tk.W, padx=(5, 0))
-        dream_layer_combo.bind('<<ComboboxSelected>>', self.update_config)
-        
         # GPU Checkbox
-        use_gpu_check = ttk.Checkbutton(model_setup_frame, text="Use GPU (if available)", 
+        use_gpu_check = ttk.Checkbutton(model_setup_frame, text="Use GPU",
                                       variable=self.use_gpu_var, command=self.update_config)
         use_gpu_check.grid(row=2, column=0, columnspan=2, sticky=tk.W, pady=2)
+        if not self.gpu_available:
+            use_gpu_check.state(['disabled'])
         
         # Middle Column: Style Controls and Timing
         ttk.Label(self.middle_frame, text="Style Image:", font=('Arial', 12, 'bold')).grid(row=0, column=0, columnspan=2, pady=(0, 5), sticky=tk.W)
@@ -150,9 +144,13 @@ class WebcamFilterUI:
         save_frame = ttk.LabelFrame(self.right_frame, text="Save Output", padding="5")
         save_frame.grid(row=2, column=0, columnspan=2, sticky="nsew", pady=(20, 5))
         
-        save_output_check = ttk.Checkbutton(save_frame, text="Save video", variable=self.save_output_var)
+        save_output_check = ttk.Checkbutton(save_frame, text="Save video", variable=self.save_output_bool, command=self.update_config)
         save_output_check.grid(row=0, column=0, columnspan=2, sticky=(tk.W, tk.E))
-        save_output_check.bind('<Button-1>', self.update_config)
+        
+        ttk.Label(save_frame, text="Save path:").grid(row=1, column=0, sticky=tk.W)
+        save_output_text = ttk.Entry(save_frame, textvariable=self.save_output_path, width=10)
+        save_output_text.grid(row=1, column=1, columnspan=2, sticky=(tk.W, tk.E))
+        save_output_text.bind('<KeyRelease>', self.update_config)
 
         # Run Button - Bottom Center
         self.button_frame = ttk.Frame(self.main_frame)
@@ -167,10 +165,9 @@ class WebcamFilterUI:
         
         # Store widgets that should be disabled after running
         self.model_setup_widgets = [
-            img_load_size_entry,
             use_gpu_check,
-            dream_layer_combo,
-            save_output_check
+            save_output_check,
+            save_output_text
         ]
         
     def load_config(self):
@@ -194,8 +191,7 @@ class WebcamFilterUI:
                 "gpu_ids": [0] if self.gpu_available else [],  # Use first GPU if available, empty list for CPU
                 "save_output_path": "",
                 "output_width": 1500,
-                "output_height": 780,
-                "dream_layer": "1"
+                "output_height": 780
             }
     
     def save_config(self):
@@ -203,9 +199,9 @@ class WebcamFilterUI:
         config_to_save = self.config.copy()
         # Convert paths to absolute before saving
         if 'style_image_path' in config_to_save:
-            config_to_save['style_image_path'] = os.path.abspath(config_to_save['style_image_path'])
+            config_to_save['style_image_path'] = os.path.relpath(config_to_save['style_image_path'])
         if 'style_images_dir' in config_to_save:
-            config_to_save['style_images_dir'] = os.path.abspath(config_to_save['style_images_dir'])
+            config_to_save['style_images_dir'] = os.path.relpath(config_to_save['style_images_dir'])
         with open('config.json', 'w') as f:
             json.dump([config_to_save], f, indent=2)
     
@@ -223,10 +219,10 @@ class WebcamFilterUI:
             "randomize": self.randomize_var.get(),
             "output_width": int(self.width_var.get()) if self.width_var.get().isdigit() else 1500,
             "output_height": int(self.height_var.get()) if self.height_var.get().isdigit() else 780,
-            "dream_layer": self.dream_layer_var.get(),
-            "img_load_size": int(self.img_load_size_var.get()) if self.img_load_size_var.get().isdigit() else 64,
+            "img_load_size": int(self.img_load_size_var.get()) if self.img_load_size_var.get().isdigit() else 256,
             "gpu_ids": [0] if self.use_gpu_var.get() else [],  # Use first GPU if checked, empty list for CPU
-            "save_output_path": "output/" if self.save_output_var.get() else ""
+            "save_output_bool": self.save_output_bool.get(),
+            "save_output_path": self.save_output_path.get() if self.save_output_path.get() else "output/"
         })
         self.save_config()
     
@@ -237,7 +233,7 @@ class WebcamFilterUI:
             filetypes=(("Image files", "*.jpg *.jpeg *.png"), ("All files", "*.*"))
         )
         if filename:
-            self.style_path_var.set(filename)
+            self.style_path_var.set(os.path.relpath(filename))
             self.update_config()
     
     def browse_style_dir(self):
@@ -246,7 +242,7 @@ class WebcamFilterUI:
             title="Select Style Images Directory"
         )
         if dirname:
-            self.style_dir_var.set(dirname)
+            self.style_dir_var.set(os.path.relpath(dirname))
             self.update_config()
     
     def run_webcam_filter(self):
