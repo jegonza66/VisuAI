@@ -1,6 +1,6 @@
 # VisuAI - Real-time AI Visual Effects
 
-![VisuAI Logo](readme_imgs/Visuai_logo.png)
+<img src="readme_imgs/Visuai_logo.png" width="300">
 
 VisuAI is an innovative real-time video processing application that brings the power of AI to your webcam. Transform your video feed with stunning visual effects powered by state-of-the-art machine learning models.
 
@@ -41,10 +41,20 @@ Your settings are automatically saved and will be restored when you restart the 
 ## 🚀 Getting Started
 
 1. Clone the repository
-2. Install dependencies:
+2. Create an environment with python 3.8.2 and activate it (conda example):
    ```bash
-   pip install -r requirements.txt
+   conda create -n visuai python=3.8.2
+   conda activate visuai
    ```
+3. Install dependencies:
+    For Linux:
+   ```bash
+   bash linux_install_requirements.sh
+   ```
+    For Windows:
+   ```bash
+    windows_install_requirements.sh
+    ```
 3. Run the application:
    ```bash
    python main.py
@@ -52,7 +62,7 @@ Your settings are automatically saved and will be restored when you restart the 
 
 ## 🎯 System Requirements
 
-- Python 3.8+
+- Python 3.8.2 (Due to tensorflow GPU and windows compatibility)
 - Webcam
 - Optional: NVIDIA GPU for accelerated processing
 
