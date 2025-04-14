@@ -24,7 +24,7 @@ with open('config.json') as f:
     style_image_path = os.path.abspath(config_dict['style_image_path'])
     style_transfer_model_path = os.path.abspath(config_dict['style_transfer_model_path'])
 
-def read_config(config_dict, output_width, output_height, dream_model_layer, models, params, img_load_size, save_output_path, gpu_ids):
+def read_config(config_dict, output_width, output_height, img_load_size, save_output_path, gpu_ids):
     """Reads the config file and updates parameters when changes are detected"""
     while True:
         try:
@@ -37,24 +37,20 @@ def read_config(config_dict, output_width, output_height, dream_model_layer, mod
                         output_width = new_config['output_width']
                     if 'output_height' in new_config:
                         output_height = new_config['output_height']
-                    # Update dream layer if changed
-                    if 'dream_layer' in new_config:
-                        dream_model_layer = new_config['dream_layer']
-                        # Reinitialize models with new parameters
-                        models, params = define_models_params(
-                            img_load_size=img_load_size, 
-                            output_width=output_width,
-                            output_height=output_height, 
-                            save_output_path=save_output_path,
-                            dream_model_layer=dream_model_layer, 
-                            gpu_ids=gpu_ids
-                        )
+                    # Reinitialize models with new parameters
+                    models, params = define_models_params(
+                        img_load_size=img_load_size,
+                        output_width=output_width,
+                        output_height=output_height,
+                        save_output_path=save_output_path,
+                        gpu_ids=gpu_ids
+                    )
         except:
             pass
         time.sleep(0.1)  # Check config every 100ms
-    return config_dict, output_width, output_height, dream_model_layer, models, params
+    return config_dict, output_width, output_height, models, params
 
-def define_models_params(img_load_size, output_width, output_height, save_output_path, dream_model_layer, gpu_ids):
+def define_models_params(img_load_size, output_width, output_height, save_output_path, gpu_ids):
     models = {}
     params = {}
 
@@ -109,15 +105,6 @@ def define_models_params(img_load_size, output_width, output_height, save_output
     # Save transform and last opt (only used for gpu ids)
     params['opt'] = opt
     params['transform'] = transform
-
-    # ----- DeepDream model ----- #
-    # Load pre-trained InceptionV3 model
-    model = InceptionV3(include_top=False, weights='imagenet')
-    dream_layer = model.get_layer(f'mixed{dream_model_layer}')  # Layer to "dream" from
-    dream_model = tf.keras.Model(inputs=model.input, outputs=dream_layer.output)
-
-    models['dream_model'] = dream_model
-    params['deam_layer'] = dream_layer
 
     return models, params
 
@@ -228,21 +215,6 @@ def transform_frame_psych(frame, frame_count, amplitude=20, wavelength=75, frame
 
     return psychedelic
 
-def transform_frame_dream(models, frame, img_load_size):
-
-    # Unpack model
-    dream_model = models['dream_model']
-    # Resize frame
-    frame = cv2.resize(frame, (img_load_size, img_load_size))
-    # Convert frame to RGB
-    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-    # Apply DeepDream effect (downscale for efficiency)
-    frame = apply_deepdream(frame, dream_model, img_size=img_load_size)
-    # Convert back to BGR for OpenCV display
-    frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
-
-    return frame
-
 
 def brighten_dark_regions(image, threshold=50, factor=1.5):
     """
@@ -262,18 +234,6 @@ def adjust_brightness_contrast(image, contrast=1, brightness=50):
     return cv2.convertScaleAbs(image, alpha=contrast, beta=brightness)
 
 
-# Gradient ascent function for DeepDream
-def deepdream(image, dream_model, iterations=2, step_size=.2):
-    image = tf.convert_to_tensor(image)
-    for _ in range(iterations):
-        with tf.GradientTape() as tape:
-            tape.watch(image)
-            loss = tf.reduce_mean(dream_model(image))
-        grads = tape.gradient(loss, image)
-        grads /= tf.math.reduce_std(grads) + 1e-8
-        image = image + grads * step_size
-    return image
-
 # Prepare image for model
 def preprocess_image(image, size):
     # Preprocess: Adjust brightness/contrast
@@ -281,19 +241,6 @@ def preprocess_image(image, size):
     image = tf.image.resize(image, (size, size))  # Resize for InceptionV3
     image = preprocess_input(image)
     return image
-
-# Apply DeepDream effect
-def apply_deepdream(frame, dream_model, img_size):
-    # Preprocess frame
-    input_image = preprocess_image(frame, img_size)
-    input_image = tf.expand_dims(input_image, axis=0)
-    # Apply deepdream
-    dreamed_image = deepdream(input_image, dream_model)
-    # Post-process and return
-    dreamed_image = dreamed_image[0]
-    dreamed_image = tf.image.resize(dreamed_image, frame.shape[:2])
-    dreamed_image = tf.cast(dreamed_image, tf.uint8)
-    return np.array(dreamed_image)
 
 
 #----- Style transfer functions -----#
