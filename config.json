@@ -1,19 +1,17 @@
 [
   {
-    "model_name": "style_transfer",
+    "model_name": "cyclegan_horse2zebra_pretrained",
     "style_transfer_model_path": "checkpoints/arbitrary-image-stylization-v1-tensorflow1-256-v2",
-    "style_image_path": "g:\\My Drive\\Visuai\\styles\\cubismo.jpg",
-    "style_images_dir": "g:\\My Drive\\Visuai\\styles",
+    "style_image_path": "styles\\cubismo.jpg",
+    "style_images_dir": "styles",
     "bpm": 120,
-    "beats": 58,
+    "beats": 4,
     "randomize": false,
     "output_width": 1500,
     "output_height": 800,
-    "dream_layer": "1",
     "img_load_size": 256,
-    "gpu_ids": [
-      0
-    ],
-    "save_output_path": ""
+    "gpu_ids": [],
+    "save_output_bool": false,
+    "save_output_path": "output/"
   }
 ]
