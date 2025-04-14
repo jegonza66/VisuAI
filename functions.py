@@ -57,7 +57,7 @@ def define_models_params(img_load_size, output_width, output_height, save_output
     # ----- YOLO model ----- #
     # Load the YOLO11 model
     device = "cuda" if gpu_ids else "cpu"
-    yolo_model = YOLO("yolo11n.pt")
+    yolo_model = YOLO("checkpoints/yolo11n.pt")
     yolo_model.to(device)  # Move model to appropriate device
     models['yolo_model'] = yolo_model
 
