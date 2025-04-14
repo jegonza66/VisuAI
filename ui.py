@@ -60,8 +60,8 @@ class WebcamFilterUI:
         self.beats_var = tk.StringVar(value=str(self.config["beats"]))
         self.bpm_var = tk.StringVar(value=str(self.config["bpm"]))
         self.width_var = tk.StringVar(value=str(self.config.get("output_width", 1500)))
-        self.height_var = tk.StringVar(value=str(self.config.get("output_height", 780)))
-        self.img_load_size_var = tk.StringVar(value=str(self.config.get("img_load_size", 64)))
+        self.height_var = tk.StringVar(value=str(self.config.get("output_height", 800)))
+        self.img_load_size_var = tk.StringVar(value=str(self.config.get("img_load_size", 256)))
         self.save_output_bool = tk.BooleanVar(value=bool(self.config.get("save_output_bool", False)))
         self.save_output_path = tk.StringVar(value=str(self.config.get("save_output_path", "output/")))
         self.use_gpu_var = tk.BooleanVar(value=self.gpu_available)  # Default to True if GPU available
@@ -165,7 +165,7 @@ class WebcamFilterUI:
         self.stop_button.pack(side=tk.LEFT, padx=5)
         self.stop_button.pack_forget()  # Hide stop button initially
 
-        # initialize the camera (only one camera use port = 0)
+        # Check for webcams
         cam_port = 0
         cam = cv2.VideoCapture(cam_port)
         try:
@@ -176,7 +176,7 @@ class WebcamFilterUI:
 
         # Store widgets that should be disabled after running
         self.model_setup_widgets = [
-            use_gpu_check,
+            # use_gpu_check,
             save_output_check,
             save_output_text
         ]
