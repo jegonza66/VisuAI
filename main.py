@@ -36,6 +36,10 @@ def visuai():
     # initialize the camera (only one camera use port = 0)
     cam_port = 0
     cam = cv2.VideoCapture(cam_port)
+    try:
+        cam.getBackendName()
+    except:
+        raise ValueError('No camera detected')
 
     # Get cam parameters
     fps = int(cam.get(cv2.CAP_PROP_FPS)) or 30
@@ -58,10 +62,9 @@ def visuai():
     config_dict = {}
 
     # Start config reading thread
-    config_thread = threading.Thread(target=functions.read_config, 
-                                   args=(config_dict, config['output_width'], config['output_height'], config['img_load_size'],
-                                        config['save_output_path'], config['gpu_ids']),
-                                   daemon=True)
+    config_thread = threading.Thread(target=functions.read_config,
+                                     args=(config_dict, config['output_width'], config['output_height'], config['img_load_size'], config['save_output_path'], config['gpu_ids']),
+                                     daemon=True)
     config_thread.start()
 
     try:

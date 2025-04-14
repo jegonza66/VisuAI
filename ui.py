@@ -5,6 +5,8 @@ import os
 import subprocess
 from PIL import Image, ImageTk
 import tensorflow as tf
+import cv2
+
 
 class WebcamFilterUI:
     def __init__(self):
@@ -162,7 +164,16 @@ class WebcamFilterUI:
         self.stop_button = ttk.Button(self.button_frame, text="Stop VisuAI", command=self.stop_webcam_filter)
         self.stop_button.pack(side=tk.LEFT, padx=5)
         self.stop_button.pack_forget()  # Hide stop button initially
-        
+
+        # initialize the camera (only one camera use port = 0)
+        cam_port = 0
+        cam = cv2.VideoCapture(cam_port)
+        try:
+            cam.getBackendName()
+        except:
+            # If no camera detected, disable the run button and disp´lay No camera detected in text
+            self.run_button.config(state='disabled', text="No camera detected")
+
         # Store widgets that should be disabled after running
         self.model_setup_widgets = [
             use_gpu_check,
