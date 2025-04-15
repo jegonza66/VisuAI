@@ -4,13 +4,13 @@ import cv2
 import tensorflow as tf
 from tensorflow.keras.applications.inception_v3 import preprocess_input
 import torch
-from util.util import tensor2im
+from models.cyclegan_core.util.util import tensor2im
 from ultralytics import YOLO
 import sys
-from options.test_options import TestOptions
+from models.cyclegan_core.options.test_options import TestOptions
 import tensorflow_hub as hub
 from torchvision import transforms
-from models import create_model
+from models.cyclegan_core.models import create_model
 import json
 import random
 import time
@@ -48,7 +48,7 @@ def define_models_params(img_load_size, output_width, output_height, save_output
     # ----- YOLO model ----- #
     # Load the YOLO11 model
     device = "cuda" if gpu_ids else "cpu"
-    yolo_model = YOLO("checkpoints/yolo11n.pt")
+    yolo_model = YOLO("models/yolo11n.pt")
     yolo_model.to(device)  # Move model to appropriate device
     models['yolo_model'] = yolo_model
     params['device'] = device
