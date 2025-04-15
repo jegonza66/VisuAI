@@ -95,7 +95,7 @@ def visuai():
 
             if 'yolo' in model_name:
                 try:
-                    frame = functions.transform_frame_yolo(models=models, frame=frame, img_load_size=config_dict.get('img_load_size', 256))
+                    frame = functions.transform_frame_yolo(models=models, frame=frame, device=params['device'])
                 except:
                     pass
 
@@ -128,7 +128,7 @@ def visuai():
                     pass
 
             # Resize output frame
-            frame = cv2.resize(frame, (config_dict.get('output_width', 1500), config_dict.get('output_height', 800)))
+            frame = cv2.resize(frame, (config_dict.get('output_width', 1500), config_dict.get('output_height', 780)))
 
             # Display the captured frame
             cv2.imshow('VisuAI', frame)
