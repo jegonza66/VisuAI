@@ -4,5 +4,5 @@ pillow
 numpy
 tensorflow==2.10.1
 tensorflow_hub
-ultralytics
+ultralytics==8.3.51
 pyvirtualcam
