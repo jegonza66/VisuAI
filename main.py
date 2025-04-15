@@ -100,11 +100,13 @@ def visuai():
                 except:
                     pass
 
-            if 'style_transfer' in model_name:
+            if 'style_transfer' in model_name and (config_dict.get('style_image_path', '') != ''
+                                                   or isinstance(params['prev_style_image'], np.ndarray)
+                                                   or (config_dict.get('randomize', True) and config_dict.get('style_images_dir', '') != '')):
                 try:
                     current_time = time.time()
                     if current_time - last_update_time >= config_dict.get('beats', 4) * 60 / config_dict.get('bpm', 60):
-                        if config_dict.get('randomize', True):
+                        if config_dict.get('randomize', True) and config_dict.get('style_images_dir', '') != '':
                             try:
                                 style_image_path = functions.randomize_style_image(
                                     style_images_dir=config_dict.get('style_images_dir', ''),
@@ -114,6 +116,7 @@ def visuai():
                         else:
                             style_image_path = config_dict.get('style_image_path', '')
                         last_update_time = current_time
+
                     frame, params['prev_style_image'] = (
                     functions.transform_frame_style_transfer(models=models, frame=frame,
                                                            img_load_size=config_dict.get('img_load_size', 256),
