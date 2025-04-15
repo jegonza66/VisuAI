@@ -1,6 +1,6 @@
 ----------------- Options ---------------
              aspect_ratio: 1.0                           
-          checkpoints_dir: ./checkpoints                 
+          checkpoints_dir: ./models/cyclegan_core/checkpoints
                 crop_size: 512                           
              dataset_mode: single                        
         dream_model_layer: 1                             	[default: 3]

@@ -12,7 +12,7 @@ See our template dataset class 'template_dataset.py' for more details.
 """
 import importlib
 import torch.utils.data
-from data.base_dataset import BaseDataset
+from models.cyclegan_core.data.base_dataset import BaseDataset
 
 
 def find_dataset_using_name(dataset_name):
@@ -22,7 +22,7 @@ def find_dataset_using_name(dataset_name):
     be instantiated. It has to be a subclass of BaseDataset,
     and it is case-insensitive.
     """
-    dataset_filename = "data." + dataset_name + "_dataset"
+    dataset_filename = "models.cyclegan_core.data." + dataset_name + "_dataset"
     datasetlib = importlib.import_module(dataset_filename)
 
     dataset = None
@@ -51,7 +51,7 @@ def create_dataset(opt):
         This is the main interface between this package and 'train.py'/'test.py'
 
     Example:
-        >>> from data import create_dataset
+        >>> from models.cyclegan_core import create_dataset
         >>> dataset = create_dataset(opt)
     """
     data_loader = CustomDatasetDataLoader(opt)
