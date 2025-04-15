@@ -23,7 +23,7 @@ class WebcamFilterUI:
 
         # Check if virtual camera is available (OBS enabled)
         try:
-            pyvirtualcam.Camera(width=self.config.get("output_width", 1500), height=self.config.get("output_height", 800), fps=30)
+            pyvirtualcam.Camera(width=self.config.get("output_width", 1500), height=self.config.get("output_height", 780), fps=30)
             self.vcam_available = True
         except:
             # If no virtual camera detected, disable the run button and disp´lay No camera detected in text
@@ -69,7 +69,7 @@ class WebcamFilterUI:
         self.beats_var = tk.StringVar(value=str(self.config["beats"]))
         self.bpm_var = tk.StringVar(value=str(self.config["bpm"]))
         self.width_var = tk.StringVar(value=str(self.config.get("output_width", 1500)))
-        self.height_var = tk.StringVar(value=str(self.config.get("output_height", 800)))
+        self.height_var = tk.StringVar(value=str(self.config.get("output_height", 780)))
         self.img_load_size_var = tk.StringVar(value=str(self.config.get("img_load_size", 256)))
         self.save_output_bool = tk.BooleanVar(value=bool(self.config.get("save_output_bool", False)))
         self.save_output_path = tk.StringVar(value=str(self.config.get("save_output_path", "output/")))
@@ -82,16 +82,22 @@ class WebcamFilterUI:
         
         # Model checkboxes
         self.model_vars = {}
-        model_options = ["Object Recognition", "Style Transfer", "Horse 2 Zebra",
-                        "Van Gogh", "Psychedelic"]
-        for i, model in enumerate(model_options):
-            self.model_vars[model] = tk.BooleanVar(value=model in self.config.get("model_name", ""))
+        # model names mapping
+        self.model_names_map = {
+            "Object Recognition": "yolo",
+            "Style Transfer": "style_transfer",
+            "Horse 2 Zebra": "cyclegan_horse2zebra_pretrained",
+            "Van Gogh": "cyclegan_style_vangogh_pretrained",
+            "Psychedelic": "psych"
+        }
+        for i, model in enumerate(list(self.model_names_map)):
+            self.model_vars[model] = tk.BooleanVar(value=self.model_names_map[model] in self.config.get("model_name", ""))
             ttk.Checkbutton(self.left_frame, text=model, variable=self.model_vars[model],
                             command=self.update_config).grid(row=i+1, column=0, columnspan=2, sticky=tk.W, pady=2)
         
         # Model Setup Parameters
         model_setup_frame = ttk.LabelFrame(self.left_frame, text="Model Setup", padding="5")
-        model_setup_frame.grid(row=len(model_options)+2, column=0, columnspan=2, sticky="nsew", pady=(20, 5))
+        model_setup_frame.grid(row=len(self.model_names_map)+2, column=0, columnspan=2, sticky="nsew", pady=(20, 5))
         
         ttk.Label(model_setup_frame, text="Image Load Size:").grid(row=0, column=0, sticky=tk.W)
         img_load_size_entry = ttk.Entry(model_setup_frame, textvariable=self.img_load_size_var, width=10)
@@ -206,13 +212,18 @@ class WebcamFilterUI:
             save_output_text,
         ]
         # Store widgets that should be disabled because not available hardware/software
-        self.unavailable_widgets = [use_gpu_check]
+        self.unavailable_widgets = []
 
-        # Add vcam to the corresponding list
+        # Add vcam and gpu check to the corresponding list
         if not self.vcam_available:
             self.unavailable_widgets.append(vcam_check)
         else:
             self.model_setup_widgets.append(vcam_check)
+
+        if not self.gpu_available:
+            self.unavailable_widgets.append(use_gpu_check)
+        else:
+            self.model_setup_widgets.append(use_gpu_check)
         
     def load_config(self):
         try:
@@ -233,7 +244,7 @@ class WebcamFilterUI:
                 "save_output_path": "output/",
                 "use_virtual_cam": False,
                 "output_width": 1500,
-                "output_height": 800
+                "output_height": 780
             }
     
     def save_config(self):
@@ -244,17 +255,8 @@ class WebcamFilterUI:
     
     def update_config(self, *args):
 
-        # model names mapping
-        model_names_map = {
-            "Object Recognition": "yolo",
-            "Style Transfer": "style_transfer",
-            "Horse 2 Zebra": "cyclegan_horse2zebra_pretrained",
-            "Van Gogh": "cyclegan_style_vangogh_pretrained",
-            "Psychedelic": "psych"
-        }
-
         # Get selected models
-        selected_models = [model_names_map[model] for model, var in self.model_vars.items() if var.get()]
+        selected_models = [self.model_names_map[model] for model, var in self.model_vars.items() if var.get()]
         model_name = "+".join(selected_models) if selected_models else "none"
         
         self.config.update({
