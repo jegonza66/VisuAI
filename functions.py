@@ -57,7 +57,10 @@ def define_models_params(img_load_size, output_width, output_height, save_output
     # Load the pre-trained style transfer model
     style_transfer_model = hub.load(style_transfer_model_path)
 
-    prev_style_image = cv2.imread(style_image_path)
+    try:
+        prev_style_image = cv2.imread(style_image_path)
+    except:
+        prev_style_image = None
 
     models['style_transfer_model'] = style_transfer_model
     params['prev_style_image'] = prev_style_image
@@ -132,13 +135,13 @@ def transform_frame_style_transfer(models, frame, img_load_size, style_image_pat
     # Load new style image
     if os.path.isfile(style_image_path):
         style_image = cv2.imread(style_image_path)
+
         # If loading failed, stick to previous style
         if not isinstance(style_image, np.ndarray):
             style_image = prev_style_image
+
         # If it worked, update previous style
-        elif style_image.shape != prev_style_image.shape:
-            prev_style_image = style_image
-        elif (style_image != prev_style_image).any():
+        else:
             prev_style_image = style_image
     else:
         # Load previous image
