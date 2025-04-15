@@ -150,14 +150,14 @@ class WebcamFilterUI:
         resolution_frame.grid(row=1, column=0, columnspan=2, sticky="nsew", pady=(10, 5))
         
         ttk.Label(resolution_frame, text="Width:").grid(row=0, column=0, sticky=tk.W)
-        width_entry = ttk.Entry(resolution_frame, textvariable=self.width_var, width=10)
-        width_entry.grid(row=0, column=1, sticky=tk.W, padx=(5, 0))
-        width_entry.bind('<KeyRelease>', self.update_config)
+        self.width_entry = ttk.Entry(resolution_frame, textvariable=self.width_var, width=10)
+        self.width_entry.grid(row=0, column=1, sticky=tk.W, padx=(5, 0))
+        self.width_entry.bind('<KeyRelease>', self.update_config)
         
         ttk.Label(resolution_frame, text="Height:").grid(row=1, column=0, sticky=tk.W)
-        height_entry = ttk.Entry(resolution_frame, textvariable=self.height_var, width=10)
-        height_entry.grid(row=1, column=1, sticky=tk.W, padx=(5, 0))
-        height_entry.bind('<KeyRelease>', self.update_config)
+        self.height_entry = ttk.Entry(resolution_frame, textvariable=self.height_var, width=10)
+        self.height_entry.grid(row=1, column=1, sticky=tk.W, padx=(5, 0))
+        self.height_entry.bind('<KeyRelease>', self.update_config)
         
         # Save Output Section with bounding box
         save_frame = ttk.LabelFrame(self.right_frame, text="Save Output", padding="5")
@@ -211,6 +211,7 @@ class WebcamFilterUI:
             save_output_check,
             save_output_text,
         ]
+
         # Store widgets that should be disabled because not available hardware/software
         self.unavailable_widgets = []
 
@@ -233,8 +234,8 @@ class WebcamFilterUI:
             self.config = {
                 "model_name": "yolo",
                 "style_transfer_model_path": "checkpoints/arbitrary-image-stylization-v1-tensorflow1-256-v2",
-                "style_image_path": "styles/cubismo.jpg",
-                "style_images_dir": "styles/",
+                "style_image_path": "",
+                "style_images_dir": "",
                 "bpm": 60,
                 "beats": 4,
                 "randomize": False,
@@ -300,6 +301,16 @@ class WebcamFilterUI:
         self.run_button.config(state='disabled', text="Running...")
         self.run_button.pack(side=tk.LEFT, padx=5)  # Move run button to the side
         self.stop_button.pack(side=tk.LEFT, padx=5)  # Show stop button
+
+        print(self.use_virtual_cam.get())
+        # If routing to virtual camera, prevent output size change
+        if self.use_virtual_cam.get():
+            self.model_setup_widgets.append(self.width_entry)
+            self.model_setup_widgets.append(self.height_entry)
+        else:
+            self.model_setup_widgets.remove(self.width_entry)
+            self.model_setup_widgets.remove(self.height_entry)
+
         for widget in self.model_setup_widgets:
             widget.config(state='disabled')
 
