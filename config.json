@@ -6,15 +6,15 @@
     "style_images_dir": "styles",
     "bpm": 120,
     "beats": 4,
-    "randomize": true,
+    "randomize": false,
     "output_width": 1500,
     "output_height": 780,
-    "img_load_size": 512,
+    "img_load_size": 256,
     "gpu_ids": [
       0
     ],
     "save_output_bool": false,
     "save_output_path": "output/",
-    "use_virtual_cam": true
+    "use_virtual_cam": false
   }
 ]
