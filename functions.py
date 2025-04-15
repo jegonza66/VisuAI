@@ -51,6 +51,7 @@ def define_models_params(img_load_size, output_width, output_height, save_output
     yolo_model = YOLO("checkpoints/yolo11n.pt")
     yolo_model.to(device)  # Move model to appropriate device
     models['yolo_model'] = yolo_model
+    params['device'] = device
 
     # ----- Style transfer model ----- #
     # Load the pre-trained style transfer model
@@ -159,35 +160,35 @@ def transform_frame_style_transfer(models, frame, img_load_size, style_image_pat
 
 def transform_frame_cyclegan(models, model_name, frame, img_load_size, opt, transform):
     # Unpack model
-    cyclegan_model_name = model_name.split('cyclegan_')[-1].split('+')[0]  # Get name between cyclegan_ and +
-    cyclegan_model = models[cyclegan_model_name]
+    cyclegan_model_names = [model.replace('cyclegan_', '') for model in model_name.split('+') if 'cyclegan_' in model]
+    cyclegan_models = [models[cyclegan_model_name] for cyclegan_model_name in cyclegan_model_names]
 
     # Resize frame
     frame = cv2.resize(frame, (img_load_size, img_load_size))
 
     # Convert to rgb
-    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    input = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
-    # Transform with model here
-    input_tensor = transform(frame).unsqueeze(0).to(torch.device("cuda" if opt.gpu_ids else "cpu"))
-
-    # Generate the transformed image
-    cyclegan_model.set_input({'A': input_tensor})  # Set the input image
-    cyclegan_model.test()  # Perform inference
-    output_image = tensor2im(cyclegan_model.get_current_visuals()['fake'])
+    for cyclegan_model in cyclegan_models:
+        # Set up model input
+        input_tensor = transform(input).unsqueeze(0).to(torch.device("cuda" if opt.gpu_ids else "cpu"))
+        # Generate the transformed image
+        cyclegan_model.set_input({'A': input_tensor})  # Set the input image
+        cyclegan_model.test()  # Perform inference
+        input = tensor2im(cyclegan_model.get_current_visuals()['fake'])
 
     # Convert the output image to a format suitable for OpenCV
-    frame = cv2.cvtColor(output_image, cv2.COLOR_RGB2BGR)
+    frame = cv2.cvtColor(input, cv2.COLOR_RGB2BGR)
 
     return frame
 
-def transform_frame_yolo(models, frame, img_load_size):
+def transform_frame_yolo(models, frame, device):
 
     # unpack model
     yolo_model = models['yolo_model']
 
     # Run YOLO11 prediction on the frame
-    results = yolo_model.predict(frame, verbose=False)
+    results = yolo_model.predict(frame, verbose=False, device=device)
 
     # Visualize the results on the frame
     frame = results[0].plot()
