@@ -1,9 +1,8 @@
 import argparse
 import os
-from util import util
+from models.cyclegan_core.util import util
 import torch
-import models
-import data
+from models.cyclegan_core import models, data
 
 
 class BaseOptions():
@@ -22,7 +21,7 @@ class BaseOptions():
         # basic parameters
         parser.add_argument('--name', type=str, default='style_vangogh_pretrained', help='name of the experiment. It decides where to store samples and models')
         parser.add_argument('--gpu_ids', type=str, default='', help='gpu ids: e.g. 0  0,1,2, 0,2. use -1 for CPU')
-        parser.add_argument('--checkpoints_dir', type=str, default='./checkpoints', help='models are saved here')
+        parser.add_argument('--checkpoints_dir', type=str, default='./models/cyclegan_core/checkpoints', help='models are saved here')
         # model parameters
         parser.add_argument('--model', type=str, default='test', help='chooses which model to use. [cycle_gan | pix2pix | test | colorization]')
         parser.add_argument('--input_nc', type=int, default=3, help='# of input image channels: 3 for RGB and 1 for grayscale')
