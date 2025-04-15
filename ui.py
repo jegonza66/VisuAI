@@ -233,7 +233,7 @@ class WebcamFilterUI:
         except:
             self.config = {
                 "model_name": "yolo",
-                "style_transfer_model_path": "checkpoints/arbitrary-image-stylization-v1-tensorflow1-256-v2",
+                "style_transfer_model_path": "models/arbitrary-image-stylization-v1-tensorflow1-256-v2",
                 "style_image_path": "",
                 "style_images_dir": "",
                 "bpm": 60,
@@ -302,14 +302,16 @@ class WebcamFilterUI:
         self.run_button.pack(side=tk.LEFT, padx=5)  # Move run button to the side
         self.stop_button.pack(side=tk.LEFT, padx=5)  # Show stop button
 
-        print(self.use_virtual_cam.get())
         # If routing to virtual camera, prevent output size change
         if self.use_virtual_cam.get():
             self.model_setup_widgets.append(self.width_entry)
             self.model_setup_widgets.append(self.height_entry)
         else:
-            self.model_setup_widgets.remove(self.width_entry)
-            self.model_setup_widgets.remove(self.height_entry)
+            try:
+                self.model_setup_widgets.remove(self.width_entry)
+                self.model_setup_widgets.remove(self.height_entry)
+            except:
+                pass
 
         for widget in self.model_setup_widgets:
             widget.config(state='disabled')
