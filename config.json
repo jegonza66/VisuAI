@@ -1,7 +1,7 @@
 [
   {
     "model_name": "none",
-    "style_transfer_model_path": "checkpoints/arbitrary-image-stylization-v1-tensorflow1-256-v2",
+    "style_transfer_model_path": "models/arbitrary-image-stylization-v1-tensorflow1-256-v2",
     "style_image_path": "styles\\cubismo.jpg",
     "style_images_dir": "styles",
     "bpm": 120,
