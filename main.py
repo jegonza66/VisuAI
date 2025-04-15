@@ -9,6 +9,7 @@ import threading
 from ui import run_ui
 import sys
 import pyvirtualcam
+import numpy as np
 
 
 def visuai():
@@ -135,7 +136,9 @@ def visuai():
 
             # Optionally route to virtual camera
             if config.get('use_virtual_cam') and v_cam is not None:
-                frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)  # Convert RGB to RGB for OBS
+                # Brighten up
+                frame_vcam = functions.increase_brightness(img=frame, value=50)
+                frame_rgb = cv2.cvtColor(frame_vcam, cv2.COLOR_BGR2RGB)  # Convert RGB to RGB for OBS
                 frame_flipped = cv2.flip(frame_rgb, 1)
                 # Send the frame to the virtual camera
                 v_cam.send(frame_flipped)
