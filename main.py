@@ -136,7 +136,9 @@ def visuai():
             # Optionally route to virtual camera
             if config.get('use_virtual_cam') and v_cam is not None:
                 frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)  # Convert RGB to RGB for OBS
-                v_cam.send(frame_rgb)
+                frame_flipped = cv2.flip(frame_rgb, 1)
+                # Send the frame to the virtual camera
+                v_cam.send(frame_flipped)
                 v_cam.sleep_until_next_frame()
 
             # Save frame if output path is set
