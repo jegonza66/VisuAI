@@ -2,7 +2,7 @@
   {
     "model_name": "none",
     "style_transfer_model_path": "models/arbitrary-image-stylization-v1-tensorflow1-256-v2",
-    "style_image_path": "styles\\cubismo.jpg",
+    "style_image_path": "styles\\nocheestrellada.jpg",
     "style_images_dir": "styles",
     "bpm": 120,
     "beats": 4,
@@ -10,11 +10,9 @@
     "output_width": 1500,
     "output_height": 780,
     "img_load_size": 256,
-    "gpu_ids": [
-      0
-    ],
+    "gpu_ids": [],
     "save_output_bool": false,
     "save_output_path": "output/",
-    "use_virtual_cam": false
+    "use_virtual_cam": true
   }
 ]
