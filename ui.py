@@ -9,11 +9,11 @@ import cv2
 import pyvirtualcam
 
 
-class WebcamFilterUI:
+class VisaiUI:
     def __init__(self):
         self.root = tk.Tk()
         self.root.title("VisuAI Controls")
-        self.root.geometry("950x480")
+        self.root.geometry("950x680")
 
         # Load initial config
         self.load_config()
@@ -65,7 +65,10 @@ class WebcamFilterUI:
         # Initialize all UI variables first
         self.style_path_var = tk.StringVar(value=self.config["style_image_path"])
         self.style_dir_var = tk.StringVar(value=self.config["style_images_dir"])
-        self.randomize_var = tk.BooleanVar(value=self.config["randomize"])
+        self.face_path_var = tk.StringVar(value=self.config["face_image_path"])
+        self.face_dir_var = tk.StringVar(value=self.config["face_images_dir"])
+        self.randomize_style_var = tk.BooleanVar(value=self.config["randomize_style"])
+        self.randomize_face_var = tk.BooleanVar(value=self.config["randomize_face"])
         self.beats_var = tk.StringVar(value=str(self.config["beats"]))
         self.bpm_var = tk.StringVar(value=str(self.config["bpm"]))
         self.width_var = tk.StringVar(value=str(self.config.get("output_width", 1500)))
@@ -84,6 +87,7 @@ class WebcamFilterUI:
         self.model_vars = {}
         # model names mapping
         self.model_names_map = {
+            "Face Swap": "faceswap",
             "Object Recognition": "yolo",
             "Style Transfer": "style_transfer",
             "Horse 2 Zebra": "cyclegan_horse2zebra_pretrained",
@@ -114,23 +118,55 @@ class WebcamFilterUI:
 
         # Middle Column: Style Controls and Timing
         ttk.Label(self.middle_frame, text="Style Image:", font=('Arial', 12, 'bold')).grid(row=0, column=0, columnspan=2, pady=(0, 5), sticky=tk.W)
-        style_entry = ttk.Entry(self.middle_frame, textvariable=self.style_path_var, width=40)  # Made wider
+
+        # Style Image frame
+        style_image_frame = ttk.LabelFrame(self.middle_frame, text="Style image", padding="5")
+        style_image_frame.grid(row=1, column=0, columnspan=2, sticky="nsew", pady=(10, 5))
+
+        style_entry = ttk.Entry(style_image_frame, textvariable=self.style_path_var, width=40)  # Made wider
         style_entry.grid(row=1, column=0, sticky=(tk.W, tk.E), padx=(0, 5))
-        ttk.Button(self.middle_frame, text="Browse", command=self.browse_style_image).grid(row=1, column=1, sticky=tk.E)
+        ttk.Button(style_image_frame, text="Browse", command=self.browse_style_image).grid(row=1, column=1, sticky=tk.E)
         
-        ttk.Label(self.middle_frame, text="Style Images Directory:", font=('Arial', 12, 'bold')).grid(row=2, column=0, columnspan=2, pady=(20, 5), sticky=tk.W)
-        style_dir_entry = ttk.Entry(self.middle_frame, textvariable=self.style_dir_var, width=40)  # Made wider
-        style_dir_entry.grid(row=3, column=0, sticky=(tk.W, tk.E), padx=(0, 5))
-        ttk.Button(self.middle_frame, text="Browse", command=self.browse_style_dir).grid(row=3, column=1, sticky=tk.E)
+        # Face directory frame
+        style_dir_frame = ttk.LabelFrame(self.middle_frame, text="Face images directory", padding="5")
+        style_dir_frame.grid(row=2, column=0, columnspan=2, sticky="nsew", pady=(10, 5))
+
+        style_dir_entry = ttk.Entry(style_dir_frame, textvariable=self.style_dir_var, width=40)  # Made wider
+        style_dir_entry.grid(row=1, column=0, sticky=(tk.W, tk.E), padx=(0, 5))
+        ttk.Button(style_dir_frame, text="Browse", command=self.browse_style_dir).grid(row=1, column=1, sticky=tk.E)
         
-        ttk.Checkbutton(self.middle_frame, text="Randomize Style", variable=self.randomize_var, 
-                       command=self.update_config).grid(row=4, column=0, columnspan=2, pady=(20, 5), sticky=tk.W)
-        
-        ttk.Label(self.middle_frame, text="Music Sync:", font=('Arial', 12, 'bold')).grid(row=5, column=0, columnspan=2, pady=(20, 5), sticky=tk.W)
+        ttk.Checkbutton(style_dir_frame, text="Randomize Style", variable=self.randomize_style_var,
+                       command=self.update_config).grid(row=2, column=0, columnspan=2, pady=(20, 5), sticky=tk.W)
+
+
+        # Middle Column: Face Swap Controls
+        ttk.Label(self.middle_frame, text="Face Swap:", font=('Arial', 12, 'bold')).grid(row=5, column=0, columnspan=2, pady=(0, 5), sticky=tk.W)
+
+        # Face Image frame
+        face_image_frame = ttk.LabelFrame(self.middle_frame, text="Face image", padding="5")
+        face_image_frame.grid(row=6, column=0, columnspan=2, sticky="nsew", pady=(10, 5))
+
+        face_entry = ttk.Entry(face_image_frame, textvariable=self.face_path_var, width=40)  # Made wider
+        face_entry.grid(row=1, column=0, sticky=(tk.W, tk.E), padx=(0, 5))
+        ttk.Button(face_image_frame, text="Browse", command=self.browse_face_image).grid(row=1, column=1, sticky=tk.E)
+
+        # Face dir frame
+        face_dir_frame = ttk.LabelFrame(self.middle_frame, text="Face images directory", padding="5")
+        face_dir_frame.grid(row=7, column=0, columnspan=2, sticky="nsew", pady=(10, 5))
+
+        style_dir_entry = ttk.Entry(face_dir_frame, textvariable=self.face_dir_var, width=40)  # Made wider
+        style_dir_entry.grid(row=1, column=0, sticky=(tk.W, tk.E), padx=(0, 5))
+        ttk.Button(face_dir_frame, text="Browse", command=self.browse_face_dir).grid(row=1, column=1, sticky=tk.E)
+
+        ttk.Checkbutton(face_dir_frame, text="Randomize Face", variable=self.randomize_face_var,
+                        command=self.update_config).grid(row=2, column=0, columnspan=2, pady=(20, 5), sticky=tk.W)
+
+        # Middle Column: Timing Controls
+        ttk.Label(self.middle_frame, text="Music Sync:", font=('Arial', 12, 'bold')).grid(row=10, column=0, columnspan=2, pady=(20, 5), sticky=tk.W)
         
         # Create a frame for timing controls to keep elements together
         timing_frame = ttk.Frame(self.middle_frame)
-        timing_frame.grid(row=6, column=0, columnspan=2, sticky=tk.W)
+        timing_frame.grid(row=11, column=0, columnspan=2, sticky=tk.W)
         
         ttk.Label(timing_frame, text="Beats:").grid(row=0, column=0, sticky=tk.W)
         beats_entry = ttk.Entry(timing_frame, textvariable=self.beats_var, width=10)
@@ -236,9 +272,12 @@ class WebcamFilterUI:
                 "style_transfer_model_path": "models/arbitrary-image-stylization-v1-tensorflow1-256-v2",
                 "style_image_path": "",
                 "style_images_dir": "",
+                "face_image_path": "",
+                "face_images_dir": "",
                 "bpm": 60,
                 "beats": 4,
-                "randomize": False,
+                "randomize_style": False,
+                "randomize_face": False,
                 "img_load_size": 256,
                 "gpu_ids": [0] if self.gpu_available else [],  # Use first GPU if available, empty list for CPU
                 "save_output_bool": False,
@@ -262,11 +301,14 @@ class WebcamFilterUI:
         
         self.config.update({
             "model_name": model_name,
+            "face_image_path": self.face_path_var.get(),
+            "face_image_dir": self.face_dir_var.get(),
             "style_image_path": self.style_path_var.get(),
             "style_images_dir": self.style_dir_var.get(),
             "bpm": int(self.bpm_var.get()) if self.bpm_var.get().isdigit() else 60,
             "beats": int(self.beats_var.get()) if self.beats_var.get().isdigit() else 4,
-            "randomize": self.randomize_var.get(),
+            "randomize_style": self.randomize_style_var.get(),
+            "randomize_face": self.randomize_face_var.get(),
             "output_width": int(self.width_var.get()) if self.width_var.get().isdigit() else 1500,
             "output_height": int(self.height_var.get()) if self.height_var.get().isdigit() else 780,
             "img_load_size": int(self.img_load_size_var.get()) if self.img_load_size_var.get().isdigit() else 256,
@@ -294,6 +336,25 @@ class WebcamFilterUI:
         )
         if dirname:
             self.style_dir_var.set(os.path.relpath(dirname))
+            self.update_config()
+
+    def browse_face_image(self):
+        filename = filedialog.askopenfilename(
+            initialdir=os.path.dirname(self.face_path_var.get()),
+            title="Select Source Face Image",
+            filetypes=(("Image files", "*.jpg *.jpeg *.png"), ("All files", "*.*"))
+        )
+        if filename:
+            self.face_path_var.set(os.path.relpath(filename))
+            self.update_config()
+
+    def browse_face_dir(self):
+        dirname = filedialog.askdirectory(
+            initialdir=os.path.dirname(self.face_dir_var.get()),
+            title="Select Source Faces Images Directory"
+        )
+        if dirname:
+            self.face_dir_var.set(os.path.relpath(dirname))
             self.update_config()
     
     def run_webcam_filter(self):
@@ -338,5 +399,5 @@ class WebcamFilterUI:
         self.root.mainloop()
 
 def run_ui():
-    ui = WebcamFilterUI()
-    ui.run() 
+    ui = VisaiUI()
+    ui.run()
