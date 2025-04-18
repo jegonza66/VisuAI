@@ -1,5 +1,9 @@
 #!/bin/bash
 
+echo "Creating conda environment"
+conda create -n visuai python=3.8.2
+conda activate visuai
+
 echo "Installing Python dependencies from requirements.txt..."
 pip install -r requirements.txt
 

@@ -1,12 +1,11 @@
 opencv-python
 ipython
 pillow
-numpy
+numpy==1.24.4
+protobuf==3.20.3
 tensorflow==2.10.1
-tensorflow_hub
+tensorflow_hub==0.16.1
 ultralytics==8.3.51
-pyvirtualcam
-onnxruntime-gpu
-
---extra-index-url https://pypi.nightlies.mlc.ai
+pyvirtualcam==0.11.1
+onnxruntime-gpu==1.19.2
 insightface==0.7.3
