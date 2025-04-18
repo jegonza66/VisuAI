@@ -10,7 +10,7 @@ from ui import run_ui
 import sys
 import pyvirtualcam
 import numpy as np
-
+import insightface
 
 def visuai():
     # Read initial config
@@ -84,8 +84,34 @@ def visuai():
 
             # Apply models in sequence
             model_name = config_dict.get('model_name', '')
-            
-            # for model_name in selected_models:
+
+            if 'faceswap' in model_name and (config_dict.get('face_image_path', '') != ''
+                                                   or isinstance(params['prev_face'], insightface.app.common.Face)
+                                                   or (config_dict.get('randomize_face', True) and config_dict.get('face_images_dir', '') != '')):
+                try:
+                    current_time = time.time()
+                    if current_time - last_update_time >= config_dict.get('beats', 4) * 60 / config_dict.get('bpm', 60):
+                        if config_dict.get('randomize_face', True) and config_dict.get('face_images_dir', '') != '':
+                            try:
+                                face_image_path = functions.randomize_face_image(
+                                    face_images_dir=config_dict.get('face_images_dir', ''),
+                                    current_image=os.path.basename(config_dict.get('face_image_path', '')))
+                            except:
+                                face_image_path = config_dict.get('face_image_path', '')
+                        else:
+                            face_image_path = config_dict.get('face_image_path', '')
+                        last_update_time = current_time
+
+                    frame, params['prev_face'], params['prev_face_image_path'] = (
+                        functions.transform_frame_faceswap(models=models, frame=frame,
+                                                           img_load_size=config_dict.get('img_load_size', 256),
+                                                           face_detector=params['face_detector'],
+                                                           face_image_path=face_image_path,
+                                                           prev_face_image_path= params['prev_face_image_path'],
+                                                           prev_face=params['prev_face']))
+                except:
+                    pass
+
             if 'cyclegan' in model_name:
                 try:
                     frame = functions.transform_frame_cyclegan(models=models, model_name=model_name, frame=frame,
@@ -102,11 +128,11 @@ def visuai():
 
             if 'style_transfer' in model_name and (config_dict.get('style_image_path', '') != ''
                                                    or isinstance(params['prev_style_image'], np.ndarray)
-                                                   or (config_dict.get('randomize', True) and config_dict.get('style_images_dir', '') != '')):
+                                                   or (config_dict.get('randomize_style', True) and config_dict.get('style_images_dir', '') != '')):
                 try:
                     current_time = time.time()
                     if current_time - last_update_time >= config_dict.get('beats', 4) * 60 / config_dict.get('bpm', 60):
-                        if config_dict.get('randomize', True) and config_dict.get('style_images_dir', '') != '':
+                        if config_dict.get('randomize_style', True) and config_dict.get('style_images_dir', '') != '':
                             try:
                                 style_image_path = functions.randomize_style_image(
                                     style_images_dir=config_dict.get('style_images_dir', ''),
@@ -119,9 +145,9 @@ def visuai():
 
                     frame, params['prev_style_image'] = (
                     functions.transform_frame_style_transfer(models=models, frame=frame,
-                                                           img_load_size=config_dict.get('img_load_size', 256),
-                                                           style_image_path=style_image_path,
-                                                           prev_style_image=params['prev_style_image']))
+                                                             img_load_size=config_dict.get('img_load_size', 256),
+                                                             style_image_path=style_image_path,
+                                                             prev_style_image=params['prev_style_image']))
                 except:
                     pass
 

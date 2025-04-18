@@ -14,14 +14,9 @@ from models.cyclegan_core.models import create_model
 import json
 import random
 import time
+import insightface
+from insightface.app import FaceAnalysis
 
-
-# Load config
-with open('config.json') as f:
-    config_dict = json.load(f)[0]
-    # Convert paths to absolute for internal use
-    style_image_path = os.path.abspath(config_dict['style_image_path'])
-    style_transfer_model_path = os.path.abspath(config_dict['style_transfer_model_path'])
 
 def read_config(config_dict, output_width, output_height, img_load_size, save_output_path, gpu_ids):
     """Reads the config file and updates parameters when changes are detected"""
@@ -41,17 +36,51 @@ def read_config(config_dict, output_width, output_height, img_load_size, save_ou
         time.sleep(0.1)  # Check config every 100ms
     return config_dict, output_width, output_height
 
+
 def define_models_params(img_load_size, output_width, output_height, save_output_path, gpu_ids):
+    # Load config
+    with open('config.json') as f:
+        config_dict = json.load(f)[0]
+        # Convert paths to absolute for internal use
+        style_image_path = os.path.abspath(config_dict['style_image_path'])
+        style_transfer_model_path = os.path.abspath(config_dict['style_transfer_model_path'])
+        face_image_path = os.path.abspath(config_dict['face_image_path'])
+
     models = {}
     params = {}
 
+    # ----- Devie ----- #
+    device = "cuda" if gpu_ids else "cpu"
+    params['device'] = device
+
+    # ----- FaceSwap model ----- #
+    # Face detector
+    app = FaceAnalysis(providers=['CUDAExecutionProvider', 'CPUExecutionProvider'])
+    app.prepare(ctx_id=0, det_size=(img_load_size, img_load_size))
+
+    # Face Swap model
+    swapper = insightface.model_zoo.get_model('models/inswapper_128.onnx', verbose=False)
+
+    # Source Face image
+    try:
+        face_image = cv2.imread(face_image_path)
+        faces = app.get(face_image)  # Detect the Face
+        face = faces[0]
+    except:
+        face = None
+
+
+    models['faceswap'] = swapper
+    params['face_detector'] = app
+    params['face_image_path'] = face_image_path
+    params['prev_face_image_path'] = face_image_path
+    params['prev_face'] = face
+
     # ----- YOLO model ----- #
     # Load the YOLO11 model
-    device = "cuda" if gpu_ids else "cpu"
     yolo_model = YOLO("models/yolo11n.pt")
     yolo_model.to(device)  # Move model to appropriate device
     models['yolo_model'] = yolo_model
-    params['device'] = device
 
     # ----- Style transfer model ----- #
     # Load the pre-trained style transfer model
@@ -102,6 +131,68 @@ def define_models_params(img_load_size, output_width, output_height, save_output
     params['transform'] = transform
 
     return models, params
+
+
+def randomize_face_image(face_images_dir, current_image=None):
+    """
+    Randomly selects a .jpg image from the specified directory, avoiding repetition of the current image.
+    """
+    # List all .jpg files in the directory
+    jpg_files = [f for f in os.listdir(face_images_dir) if f.endswith('.jpg')]
+    if not jpg_files:
+        raise ValueError(f"No .jpg files found in directory: {face_images_dir}")
+
+    # Remove the current image from the list if it exists
+    if current_image in jpg_files:
+        jpg_files.remove(current_image)
+
+    # If only the current image exists, return it
+    if not jpg_files:
+        return os.path.join(face_images_dir, current_image)
+
+    # Select a random .jpg file
+    random_image = random.choice(jpg_files)
+    return os.path.join(face_images_dir, random_image)
+
+
+def transform_frame_faceswap(models, frame, img_load_size, face_detector, face_image_path, prev_face_image_path,
+                             prev_face):
+
+    # Unpack models
+    faceswap_model = models['faceswap']
+
+    # Resize frame
+    frame = cv2.resize(frame, (img_load_size, img_load_size))
+
+    # Load new style image
+    if os.path.isfile(face_image_path) and face_image_path != prev_face_image_path:
+        face_image = cv2.imread(face_image_path)
+        faces = face_detector.get(face_image)  # Detect the Face
+        face = faces[0]
+
+        # If loading failed, stick to previous style
+        if not isinstance(face, insightface.app.common.Face):
+            face = prev_face
+
+        # If it worked, update previous style
+        else:
+            prev_face = face
+            prev_face_image_path = face_image_path
+    else:
+        # Load previous image
+        face = prev_face
+
+    # Convert frame to RGB
+    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+    # Apply style transfer
+    frame = apply_faceswap(frame, face, faceswap_model, face_detector, image_size=img_load_size)
+
+    # Convert back to BGR for OpenCV display
+    frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+
+    return frame, prev_face, prev_face_image_path
+
 
 def randomize_style_image(style_images_dir, current_image=None):
     """
@@ -236,6 +327,20 @@ def preprocess_image(image, size):
     image = tf.image.resize(image, (size, size))  # Resize for InceptionV3
     image = preprocess_input(image)
     return image
+
+
+#----- FaceSwap functions -----#
+def apply_faceswap(frame, source_face, faceswap_model, face_detector, image_size):
+
+    # Get faces from frame
+    faces = face_detector.get(frame)
+
+    # Replace faces in image with source image
+    res = frame.copy()
+    for face in faces:
+        res = faceswap_model.get(res, face, source_face, paste_back=True)
+
+    return res
 
 
 #----- Style transfer functions -----#

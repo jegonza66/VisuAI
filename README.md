@@ -10,6 +10,7 @@ VisuAI is an innovative real-time video processing application that brings the p
 - **Multiple Models**: Choose from various AI models including:
   - YOLO object detection
   - Style Transfer
+  - One shot Face Swap
   - CycleGAN transformations (based on [pytorch-CycleGAN-and-pix2pix](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix))
   - Psychedelic filters
 - **Virtual Camera Support**: Stream your AI-enhanced video to web conferencing apps like Google Meet, Microsoft Teams, and Zoom
@@ -29,10 +30,14 @@ The intuitive interface allows you to:
   - Select a style image for style transfer
   - Choose a directory for random style selection
   - Enable/disable style randomization
-3. **Timing Controls**: Change the image style to the rythm of music!
+3. **Face Images**: 
+  - Select a face image for face swap
+  - Choose a directory for random faces selection
+  - Enable/disable faces randomization
+4**Timing Controls**: Change the image style to the rythm of music!
   - Set BPM (beats per minute)
   - Configure a number of beats to change the style of the image
-4. **Output Settings**:
+5**Output Settings**:
    - Adjust output video resolution
    - Enable/disable video saving
    - Configure GPU usage
@@ -40,27 +45,34 @@ The intuitive interface allows you to:
 
 Your settings are automatically saved and will be restored when you restart the application.
 
-## 🚀 Getting Started
+## 😎 Face Swap
 
-1. Clone the repository
-2. Create an environment with python 3.8.2 and activate it (conda example):
-   ```bash
-   conda create -n visuai python=3.8.2
-   conda activate visuai
-   ```
-3. Install dependencies:
-    For Linux:
-   ```bash
-   bash linux_install_requirements.sh
-   ```
-    For Windows:
-   ```bash
-    windows_install_requirements.sh
-    ```
-4. Run the application:
-   ```bash
-   python main.py
-   ```
+Bring some fun to your feed with **one-shot face swapping**! This feature replaces faces detected in your webcam with a target face image using a pre-trained encoder-decoder model.
+
+- 👤 **Single Face Selection**: Upload any face image to use for swapping.
+- 📁 **Batch Face Mode**: Provide a folder with multiple faces to randomly switch between.
+- 🔄 **Automatic Face Cycling**: Randomize face swaps every few seconds or in sync with music beats.
+- 🧠 **One-shot inference**: Works without the need for multiple examples of the target face.
+
+<img src="readme_imgs/cristiano-messi.png" width="300">
+
+The face swap engine uses a one-shot facial reenactment model to map expressions and poses from the webcam input onto the chosen target face, while preserving realism and head orientation.inspired by [insightface](https://github.com/deepinsight/insightface)
+
+**Note**: Ensure your webcam is well-lit and the face is clearly visible for best results.
+
+## 🖌️ Style Transfer
+
+VisuAI features a fast and flexible **neural style transfer** module that allows you to apply artistic styles to your webcam feed in real time.
+
+- 🖼️ **Style Image Selection**: Choose a specific style image or a folder with multiple styles.
+- 🔀 **Random Style Mode**: Enable automatic switching between styles at set intervals or synced to the music beat.
+- ⚙️ **Adjustable Parameters**:
+  - Resolution of image output
+  - Update frequency (for random styles)
+
+<img src="readme_imgs/cristiano-messi-estrellada.png" width="300">
+
+The style transfer model is optimized for speed and quality, using techniques inspired by [fast-style-transfer](https://github.com/lengstrom/fast-style-transfer). Whether you're going for Van Gogh vibes or digital glitch aesthetics, VisuAI has you covered.
 
 ## 🌐 Web Video Conference Support
 
@@ -76,6 +88,23 @@ VisuAI can stream its AI-enhanced video feed to web conferencing apps like Googl
   - Check the console for errors if the feed doesn’t display.
 
 **Note**: On Linux, install `v4l2loopback` (`sudo apt-get install v4l2loopback-dkms`) instead of OBS. On macOS, `pyvirtualcam` typically works without additional software.
+
+## 🚀 Getting Started
+
+1. Clone the repository
+2. Use the installer for Windows or Linux (it will create a conda environment and install all the requirements):
+    For Linux:
+   ```bash
+   bash linux_install_requirements.sh
+   ```
+    For Windows:
+   ```bash
+    windows_install_requirements.sh
+    ```
+4. Run the application:
+   ```bash
+   python main.py
+   ```
 
 ## 🎯 System Requirements
 
