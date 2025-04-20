@@ -104,7 +104,6 @@ def visuai():
 
                     frame, params['prev_face'], params['prev_face_image_path'] = (
                         functions.transform_frame_faceswap(models=models, frame=frame,
-                                                           img_load_size=config_dict.get('img_load_size', 256),
                                                            face_detector=params['face_detector'],
                                                            face_image_path=face_image_path,
                                                            prev_face_image_path= params['prev_face_image_path'],

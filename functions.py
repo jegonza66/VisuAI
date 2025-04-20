@@ -155,16 +155,13 @@ def randomize_face_image(face_images_dir, current_image=None):
     return os.path.join(face_images_dir, random_image)
 
 
-def transform_frame_faceswap(models, frame, img_load_size, face_detector, face_image_path, prev_face_image_path,
+def transform_frame_faceswap(models, frame, face_detector, face_image_path, prev_face_image_path,
                              prev_face):
 
     # Unpack models
     faceswap_model = models['faceswap']
 
-    # Resize frame
-    frame = cv2.resize(frame, (img_load_size, img_load_size))
-
-    # Load new style image
+    # Load new face image
     if os.path.isfile(face_image_path) and face_image_path != prev_face_image_path:
         face_image = cv2.imread(face_image_path)
         faces = face_detector.get(face_image)  # Detect the Face
@@ -185,8 +182,8 @@ def transform_frame_faceswap(models, frame, img_load_size, face_detector, face_i
     # Convert frame to RGB
     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
-    # Apply style transfer
-    frame = apply_faceswap(frame, face, faceswap_model, face_detector, image_size=img_load_size)
+    # Apply faceswap
+    frame = apply_faceswap(frame, face, faceswap_model, face_detector)
 
     # Convert back to BGR for OpenCV display
     frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
@@ -330,7 +327,7 @@ def preprocess_image(image, size):
 
 
 #----- FaceSwap functions -----#
-def apply_faceswap(frame, source_face, faceswap_model, face_detector, image_size):
+def apply_faceswap(frame, source_face, faceswap_model, face_detector):
 
     # Get faces from frame
     faces = face_detector.get(frame)
