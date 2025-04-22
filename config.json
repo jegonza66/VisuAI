@@ -13,9 +13,7 @@
     "output_width": 1500,
     "output_height": 780,
     "img_load_size": 256,
-    "gpu_ids": [
-      0
-    ],
+    "gpu_ids": [],
     "save_output_bool": false,
     "save_output_path": "output/",
     "use_virtual_cam": false,

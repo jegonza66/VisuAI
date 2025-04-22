@@ -115,6 +115,8 @@ class VisaiUI:
         if not self.gpu_available:
             # use_gpu_check.state(['disabled'])
             use_gpu_check.config(state='disabled', text="Use GPU (No GPU detected)")
+            self.use_gpu_var.set(False)
+            self.update_config()
 
         # Middle Column: Style Controls and Timing
         ttk.Label(self.middle_frame, text="Style Image:", font=('Arial', 12, 'bold')).grid(row=0, column=0, columnspan=2, pady=(0, 5), sticky=tk.W)
@@ -225,10 +227,10 @@ class VisaiUI:
         self.button_frame = ttk.Frame(self.main_frame)
         self.button_frame.grid(row=2, column=0, columnspan=3, pady=20)
         
-        self.run_button = ttk.Button(self.button_frame, text="Run VisuAI", command=self.run_webcam_filter)
+        self.run_button = ttk.Button(self.button_frame, text="Run VisuAI", command=self.run_visuai)
         self.run_button.pack()
         
-        self.stop_button = ttk.Button(self.button_frame, text="Stop VisuAI", command=self.stop_webcam_filter)
+        self.stop_button = ttk.Button(self.button_frame, text="Stop VisuAI", command=self.stop_visuai)
         self.stop_button.pack(side=tk.LEFT, padx=5)
         self.stop_button.pack_forget()  # Hide stop button initially
 
@@ -357,11 +359,14 @@ class VisaiUI:
             self.face_dir_var.set(os.path.relpath(dirname))
             self.update_config()
     
-    def run_webcam_filter(self):
+    def run_visuai(self):
         # Disable the run button and model setup widgets while the filter is running
         self.run_button.config(state='disabled', text="Running...")
         self.run_button.pack(side=tk.LEFT, padx=5)  # Move run button to the side
         self.stop_button.pack(side=tk.LEFT, padx=5)  # Show stop button
+
+        # Update config json
+        self.update_config()
 
         # If routing to virtual camera, prevent output size change
         if self.use_virtual_cam.get():
@@ -383,7 +388,7 @@ class VisaiUI:
         # Start the webcam filter in a separate process
         self.process = subprocess.Popen(['python', 'main.py', '--run'])
     
-    def stop_webcam_filter(self):
+    def stop_visuai(self):
         if hasattr(self, 'process'):
             self.process.terminate()
             self.process = None
