@@ -21,7 +21,7 @@ VisuAI is an innovative real-time video processing application that brings the p
 
 ## 🖥️ Interface
 
-<img src="readme_imgs/Visuai_ui.png" width="700">
+<img src="readme_imgs/Visuai_ui.png" width="600">
 
 The intuitive interface allows you to:
 
@@ -54,7 +54,7 @@ Bring some fun to your feed with **one-shot face swapping**! This feature replac
 - 🔄 **Automatic Face Cycling**: Randomize face swaps every few seconds or in sync with music beats.
 - 🧠 **One-shot inference**: Works without the need for multiple examples of the target face.
 
-<img src="readme_imgs/cristiano-messi.png" width="300">
+<img src="readme_imgs/cristiano-messi.png" width="600">
 
 The face swap engine uses a one-shot facial reenactment model to map expressions and poses from the webcam input onto the chosen target face, while preserving realism and head orientation.inspired by [insightface](https://github.com/deepinsight/insightface)
 
@@ -70,7 +70,7 @@ VisuAI features a fast and flexible **neural style transfer** module that allows
   - Resolution of image output
   - Update frequency (for random styles)
 
-<img src="readme_imgs/cristiano-messi-estrellada.png" width="300">
+<img src="readme_imgs/cristiano-messi-estrellada.png" width="600">
 
 The style transfer model is optimized for speed and quality, using techniques inspired by [fast-style-transfer](https://github.com/lengstrom/fast-style-transfer). Whether you're going for Van Gogh vibes or digital glitch aesthetics, VisuAI has you covered.
 
@@ -92,7 +92,7 @@ VisuAI can stream its AI-enhanced video feed to web conferencing apps like Googl
 ## 🚀 Getting Started
 
 1. Clone the repository
-2. Use the installer for Windows or Linux (it will create a conda environment and install all the requirements):
+2. Use the installer for Windows or Linux (Conda required: it will create a conda environment and install all the requirements):
     For Linux:
    ```bash
    bash linux_install_requirements.sh
@@ -105,6 +105,9 @@ VisuAI can stream its AI-enhanced video feed to web conferencing apps like Googl
    ```bash
    python main.py
    ```
+**Note**: On Windows you need to have installed "Desktop development with C++" from Visual Studio Installer, to make the wheels to install all the dependencies (insightface).
+
+**Alternatively**, you can create an environment and install the requirements manually (consider installing the torch dependencies specified in the .sh and .bat files)
 
 ## 🎯 System Requirements
 
