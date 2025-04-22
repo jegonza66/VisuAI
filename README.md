@@ -54,7 +54,7 @@ Bring some fun to your feed with **one-shot face swapping**! This feature replac
 - 🔄 **Automatic Face Cycling**: Randomize face swaps every few seconds or in sync with music beats.
 - 🧠 **One-shot inference**: Works without the need for multiple examples of the target face.
 
-<img src="readme_imgs/cristiano-messi.png" width="600">
+<img src="readme_imgs/cristiano-messi.png" width="500">
 
 The face swap engine uses a one-shot facial reenactment model to map expressions and poses from the webcam input onto the chosen target face, while preserving realism and head orientation.inspired by [insightface](https://github.com/deepinsight/insightface)
 
@@ -87,31 +87,38 @@ VisuAI can stream its AI-enhanced video feed to web conferencing apps like Googl
   - Ensure no other apps are using the virtual camera.
   - Check the console for errors if the feed doesn’t display.
 
-**Note**: On Linux, install `v4l2loopback` (`sudo apt-get install v4l2loopback-dkms`) instead of OBS. On macOS, `pyvirtualcam` typically works without additional software.
+**Note (not tested)**: On Linux, install `v4l2loopback` (`sudo apt-get install v4l2loopback-dkms`) instead of OBS. On macOS, `pyvirtualcam` typically works without additional software.
 
 ## 🚀 Getting Started
 
 1. Clone the repository
-2. Use the installer for Windows or Linux (Conda required: it will create a conda environment and install all the requirements):
-    For Linux:
+2. Use the installer (Anaconda required https://www.anaconda.com/download)
+
+    The installer will create a conda environment called `visuai` and install all the requirements.
+    Then, on the Anaconda promt:
+    - For Linux:
    ```bash
    bash linux_install_requirements.sh
    ```
-    For Windows:
+    - For Windows (Desktop development with C++" from Visual Studio Installer required):
    ```bash
-    windows_install_requirements.sh
+    windows_install_requirements.bat
     ```
+3. Activate the environment on Anaconda prompt:
+   ```bash
+   conda activate visuai
+   ```
 4. Run the application:
    ```bash
    python main.py
    ```
-**Note**: On Windows you need to have installed "Desktop development with C++" from Visual Studio Installer, to make the wheels to install all the dependencies (insightface).
+**Note**: On Windows you need to have installed "Desktop development with C++" from Visual Studio Installer (https://aka.ms/vs/17/release/vs_BuildTools.exe), to make the wheels to install insightface library.
 
-**Alternatively**, you can create an environment and install the requirements manually (consider installing the torch dependencies specified in the .sh and .bat files)
+**Alternatively**, you can create an environment with python 3.8.X and install the requirements manually (keep in mind the torch dependencies specified in the .sh or .bat files)
 
 ## 🎯 System Requirements
 
-- Python 3.8.2 (Due to tensorflow GPU and windows compatibility)
+- Python 3.8.X (Due to tensorflow GPU and windows compatibility)
 - Webcam
 - Optional: NVIDIA GPU for accelerated processing
 
