@@ -7,6 +7,7 @@ from PIL import Image, ImageTk
 import tensorflow as tf
 import cv2
 import pyvirtualcam
+import time
 
 
 class VisaiUI:
@@ -179,6 +180,11 @@ class VisaiUI:
         bpm_entry = ttk.Entry(timing_frame, textvariable=self.bpm_var, width=10)
         bpm_entry.grid(row=0, column=3, sticky=tk.W, padx=(5, 0))
         bpm_entry.bind('<KeyRelease>', self.update_config)
+        
+        # Add the Mark Beat button
+        self.mark_beat_button = ttk.Button(timing_frame, text="Mark Beat", command=self.mark_beat)
+        self.mark_beat_button.grid(row=0, column=4, sticky=tk.W, padx=(5, 0))
+        
         
         # Right Column: Output Settings
         ttk.Label(self.right_frame, text="Output Settings:", font=('Arial', 12, 'bold')).grid(row=0, column=0, columnspan=2, pady=(0, 5), sticky=tk.W)
@@ -402,6 +408,22 @@ class VisaiUI:
     
     def run(self):
         self.root.mainloop()
+
+    def mark_beat(self):
+        """Records the current time to config.json when the button is pressed."""
+        current_time = time.time()
+        print(f"Beat marked at: {current_time}")
+        
+        # Update the config dictionary
+        # Ensure self.config is loaded if it's not always up-to-date
+        # self.load_config() # Uncomment if necessary, but update_config might keep it fresh
+        self.config["last_beat_timestamp"] = current_time
+        
+        # Save the updated config to json
+        self.save_config()
+        
+        # Optionally, update the UI variables if needed, though not strictly necessary for this
+        # self.update_config() # Might be redundant if save_config handles updates
 
 def run_ui():
     ui = VisaiUI()

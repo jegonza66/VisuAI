@@ -1,22 +1,25 @@
 [
   {
-    "model_name": "none",
+    "model_name": "style_transfer",
     "style_transfer_model_path": "models/arbitrary-image-stylization-v1-tensorflow1-256-v2",
-    "style_image_path": "styles\\nocheestrellada.jpg",
-    "style_images_dir": "styles",
+    "style_image_path": "styles\\kandinsky1.jpg",
+    "style_images_dir": "styles\\rojo",
     "face_image_path": "source_faces\\messi.jpg",
     "face_images_dir": "source_faces",
-    "bpm": 120,
-    "beats": 4,
+    "bpm": 135,
+    "beats": 64,
     "randomize_style": false,
     "randomize_face": false,
-    "output_width": 1500,
-    "output_height": 780,
+    "output_width": 1300,
+    "output_height": 720,
     "img_load_size": 256,
-    "gpu_ids": [],
+    "gpu_ids": [
+      0
+    ],
     "save_output_bool": false,
     "save_output_path": "output/",
     "use_virtual_cam": false,
-    "face_image_dir": "source_faces"
+    "face_image_dir": "source_faces",
+    "last_beat_timestamp": null
   }
 ]
