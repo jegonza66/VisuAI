@@ -121,7 +121,6 @@ def visuai():
                     face_image_path_to_use = params.get('prev_face_image_path', config_dict.get('face_image_path', '')) # Start with previous or config path
                     
                     if should_update_image:
-                        print("Updating face image...") # Log update
                         if config_dict.get('randomize_face', True) and config_dict.get('face_images_dir', '') != '':
                             try:
                                 # Pass the *current* base path to avoid selecting the same image if possible
@@ -178,7 +177,6 @@ def visuai():
                     style_image_path_to_use = params.get('prev_style_image_path', config_dict.get('style_image_path', '')) # Start with previous path or config path
                     
                     if should_update_image: # Use the combined update condition
-                        print("Updating style image...") # Log update
                         if config_dict.get('randomize_style', True) and config_dict.get('style_images_dir', '') != '':
                             try:
                                 # Pass the *current* base path
